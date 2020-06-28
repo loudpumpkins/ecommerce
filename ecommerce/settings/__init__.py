@@ -1,7 +1,7 @@
 from .base import *
 
-if base.DEBUG:
+try:
 	# from .local import *
 	pass # delete this soon
-else:
+except:
 	from .production import *
