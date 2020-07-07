@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 # internal
-from shop.models import Order, OrderItem
+from shop.models.order import OrderItem
 from shop.support import cart_modifiers_pool
 
 
@@ -13,7 +13,7 @@ class Delivery(models.Model):
 	Shipping provider to keep track on each delivery.
 	"""
 	order = models.ForeignKey(
-		Order,
+		'Order',
 		on_delete=models.CASCADE,
 		related_name='deliveries'
 	)
@@ -96,7 +96,7 @@ class DeliveryItem(models.Model):
 	implementing this model.
 	"""
 	delivery = models.ForeignKey(
-		Delivery,
+		'Delivery',
 		verbose_name=_("Delivery"),
 		on_delete=models.CASCADE,
 		related_name='items',
@@ -104,7 +104,7 @@ class DeliveryItem(models.Model):
 	)
 
 	item = models.ForeignKey(
-		OrderItem,
+		'OrderItem',
 		on_delete=models.CASCADE,
 		related_name='deliver_item',
 		verbose_name=_("Ordered item"),

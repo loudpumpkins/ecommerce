@@ -14,7 +14,6 @@ from django.utils.translation import gettext_lazy as _
 # internal
 from customer.managers import CustomerState, CustomerManager, AddressManager
 from shared.fields import ChoiceEnumField, JSONField, CountryField
-from shop.models import Store
 
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore()
@@ -37,7 +36,7 @@ class Customer(models.Model):
 	)
 
 	store = models.ForeignKey(
-		Store,
+		'Store',
 		on_delete=models.CASCADE,
 		related_name='customers'
 	)

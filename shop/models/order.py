@@ -18,7 +18,7 @@ from shared.fields import JSONField, MoneyField
 from shared.money import MoneyMaker
 from shared.statemachine import FSMField, transition
 from shop.managers import OrderManager
-from shop.models import CartItem, Product
+from shop.models.cart import CartItem
 
 
 class Order(models.Model):
@@ -66,7 +66,7 @@ class Order(models.Model):
 	decimal_exp = Decimal('.' + '0' * decimalfield_kwargs['decimal_places'])
 
 	customer = models.ForeignKey(
-		Customer,
+		'Customer',
 		on_delete=models.PROTECT,
 		verbose_name=_("Customer"),
 		related_name='orders',
@@ -417,7 +417,7 @@ class OrderPayment(models.Model):
 	A model to hold received payments for a given order.
 	"""
 	order = models.ForeignKey(
-		Order,
+		'Order',
 		on_delete=models.CASCADE,
 		verbose_name=_("Order"),
 		related_name='orderpayments',
@@ -460,7 +460,7 @@ class OrderItem(models.Model):
 	An item for an order.
 	"""
 	order = models.ForeignKey(
-		Order,
+		'Order',
 		on_delete=models.CASCADE,
 		related_name='items',
 		verbose_name=_("Order"),
@@ -487,7 +487,7 @@ class OrderItem(models.Model):
 	)
 
 	product = models.ForeignKey(
-		Product,
+		'Product',
 		on_delete=models.SET_NULL,
 		verbose_name=_("Product"),
 		null=True,

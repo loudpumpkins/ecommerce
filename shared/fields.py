@@ -221,7 +221,7 @@ class MoneyField(models.DecimalField):
 	description = _("Money in %(currency_code)s")
 
 	def __init__(self, *args, **kwargs):
-		self.currency_code = kwargs.pop('currency', app_settings.DEFAULT_CURRENCY)
+		self.currency_code = kwargs.pop('currency', settings.DEFAULT_CURRENCY)
 		self.Money = MoneyMaker(self.currency_code)
 		defaults = {
 			'max_digits': 30,

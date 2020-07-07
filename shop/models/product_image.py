@@ -5,7 +5,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 # internal
-from shop.models import Product
 
 
 class ProductImage(models.Model):
@@ -15,7 +14,7 @@ class ProductImage(models.Model):
 	image = image.FilerImageField(on_delete=models.CASCADE)
 
 	product = models.ForeignKey(
-		Product,
+		'Product',
 		on_delete=models.CASCADE,
 	)
 

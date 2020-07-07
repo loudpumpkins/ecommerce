@@ -10,7 +10,8 @@ from django.utils.translation import gettext_lazy as _
 from shared.fields import JSONField, MoneyField
 from shop.exceptions import ProductNotAvailable
 from shop.managers import ProductManager
-from shop.models import CartItem, ProductImage, Store
+from shop.models.cart import CartItem
+from shop.models.product_image import ProductImage
 from shop.support import Availability
 
 
@@ -34,7 +35,7 @@ class Product(models.Model):
 	)
 
 	store = models.ForeignKey(
-		Store,
+		'Store',
 		on_delete=models.CASCADE,
 		related_name='product'
 	)

@@ -15,6 +15,9 @@ customer/migrations/*
 payment/migrations/*
 !payment/migrations/__init__.py
 
+shipping/migrations/*
+!shipping/migrations/__init__.py
+
 shop/migrations/*
 !shop/migrations/__init__.py
 

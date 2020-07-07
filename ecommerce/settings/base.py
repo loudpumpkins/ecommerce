@@ -25,12 +25,12 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-# replace django.contrib.auth.models.User by implementation
-# allowing to login via email address
-AUTH_USER_MODEL = 'email_auth.User'
-
 INSTALLED_APPS = [
 	'customer',
+	'easy_thumbnails',
+	'easy_thumbnails.optimize',
+	'filer',
+	'mptt',  # for filer
 	'payment',
 	'rest_framework',
 	'shop',
@@ -127,6 +127,23 @@ STATIC_URL = '/static/'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 # SESSION_SAVE_EVERY_REQUEST = True
+
+############################################
+# DJANGO FILER
+
+FILER_ADMIN_ICON_SIZES = ('16', '32', '48', '80', '128')
+FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
+FILER_DUMP_PAYLOAD = False
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+THUMBNAIL_HIGH_RESOLUTION = False
+THUMBNAIL_PRESERVE_EXTENSIONS = True
+
+THUMBNAIL_PROCESSORS = (
+	'easy_thumbnails.processors.colorspace',
+	'easy_thumbnails.processors.autocrop',
+	'filer.thumbnail_processors.scale_and_crop_with_subject_location',
+	'easy_thumbnails.processors.filters',
+)
 
 ################################################################################
 # GENERAL
