@@ -36,7 +36,7 @@ class Customer(models.Model):
 	)
 
 	store = models.ForeignKey(
-		'Store',
+		'shop.Store',
 		on_delete=models.CASCADE,
 		related_name='customers'
 	)

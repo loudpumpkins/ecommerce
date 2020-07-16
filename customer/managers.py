@@ -221,9 +221,11 @@ class VisitingCustomer:
 	def save(self, **kwargs):
 		pass
 
+
 class AddressManager(models.Manager):
 	def get_max_priority(self, customer):
-		aggr = self.get_queryset().filter(customer=customer).aggregate(models.Max('priority'))
+		aggr = self.get_queryset().filter(customer=customer)\
+			.aggregate(models.Max('priority'))
 		priority = aggr['priority__max'] or 0
 		return priority
 

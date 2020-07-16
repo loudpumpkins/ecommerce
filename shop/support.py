@@ -1,9 +1,12 @@
 # external
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models.signals import pre_delete, pre_save
 from django.utils import timezone
+from django.utils.module_loading import import_string
 
 # internal
+from shop.models.store import Store
 
 
 class Availability:
@@ -48,66 +51,96 @@ class CartModifiersPool:
 
 	Usage example:
 
-		cart_modifiers_pool = CartModifiersPool()
-		cart_modifiers_pool.get_all_modifiers()
+		from shop.support import cart_modifiers_pool
 
-	Usage in context:
-
-		cart_modifiers_pool = CartModifiersPool()
-		for modifier in cart_modifiers_pool.get_all_modifiers():
+		for modifier in cart_modifiers_pool.get_all_modifiers(request=request):
 			modifier.pre_process_cart(self, request, raise_exception)
 			for item in items:
 				modifier.pre_process_cart_item(self, item, request, raise_exception)
-
 	"""
-	USE_CACHE = True
 
 	def __init__(self):
-		self._modifiers_list = []
+		self.MODIFIERS_CACHE = {}
 
-	def get_all_modifiers(self):
+	def clear_cache(self):
+		self.MODIFIERS_CACHE = {}
+
+	def clear_site_cache(self, sender, **kwargs):
 		"""
-		Returns all registered modifiers of this shop instance.
+		Clear the cache (if primed) each time a site is saved or deleted.
 		"""
-		if not self.USE_CACHE or not self._modifiers_list:
-			self._modifiers_list = []
-			for modifiers_class in settings.CART_MODIFIERS:
-				if issubclass(modifiers_class, (list, tuple)):
-					self._modifiers_list.extend([mc() for mc in modifiers_class()])
-				else:
-					self._modifiers_list.append(modifiers_class())
-			# check for uniqueness of the modifier's `identifier` attribute
-			ModifierException = \
-				ImproperlyConfigured("Each modifier requires a unique attribute "
-									 "'identifier'.")
-			try:
-				identifiers = [m.identifier for m in self._modifiers_list]
-			except AttributeError:
+		instance = kwargs['instance']  # instance is a `store` object
+		try:
+			del self.MODIFIERS_CACHE[instance.domain]
+		except KeyError:
+			pass
+
+	def get_all_modifiers(self, request=None, store=None):
+		"""
+		Returns all registered modifiers of the shop provided or the shop in
+		the request.
+		Must provide either a `store` object or a `request`.
+		"""
+		if store is None and request is None:
+			raise ImproperlyConfigured("Must provide either a `store` object "
+									   "or a `request`.")
+		if store is None:
+			store = Store.objects.get_current(request)
+
+		# data cached
+		if store.domain in self.MODIFIERS_CACHE:
+			return self.MODIFIERS_CACHE[store.domain]
+
+		# no cached data - make new entry
+		imported = [import_string(mc) for mc in store.get_cart_modifiers()]
+		self.MODIFIERS_CACHE[store.domain]['cart'] = [mc() for mc in imported]
+		imported = [import_string(mc) for mc in store.get_payment_modifiers()]
+		self.MODIFIERS_CACHE[store.domain]['payment'] = [mc() for mc in imported]
+		imported = [import_string(mc) for mc in store.get_shipping_modifiers()]
+		self.MODIFIERS_CACHE[store.domain]['shipping'] = [mc() for mc in imported]
+
+		# check for uniqueness of the modifier's `identifier` attribute
+		ModifierException = \
+			ImproperlyConfigured("Each modifier requires a unique attribute "
+			                     "'identifier'.")
+		modifiers = self.MODIFIERS_CACHE[store.domain]['cart'] + \
+		            self.MODIFIERS_CACHE[store.domain]['payment'] + \
+		            self.MODIFIERS_CACHE[store.domain]['shipping']
+		try:
+			identifiers = [m.identifier for m in modifiers]
+		except AttributeError:
+			raise ModifierException
+		for i in identifiers:
+			if identifiers.count(i) > 1:
 				raise ModifierException
-			for i in identifiers:
-				if identifiers.count(i) > 1:
-					raise ModifierException
-		return self._modifiers_list
 
-	def get_shipping_modifiers(self):
+		return modifiers
+
+	def get_shipping_modifiers(self, request=None, store=None):
 		"""
 		Returns all registered shipping modifiers of this shop instance.
+		Must provide either a `store` object or a `request`.
 		"""
-		# TODO - implement get_shipping_modifiers
-		pass
+		if store is None and request is None:
+			raise ImproperlyConfigured("Must provide either a `store` object "
+									   "or a `request`.")
+		if store is None:
+			store = Store.objects.get_current(request)
+		self.get_all_modifiers(store=store)
+		return self.MODIFIERS_CACHE[store.domain]['shipping']
 
-		# from shop.shipping.modifiers import ShippingModifier
-		# return [m for m in self.get_all_modifiers() if isinstance(m, ShippingModifier)]
-
-	def get_payment_modifiers(self):
+	def get_payment_modifiers(self, request=None, store=None):
 		"""
 		Returns all registered payment modifiers of this shop instance.
+		Must provide either a `store` object or a `request`.
 		"""
-		# TODO - implement get_payment_modifiers
-		pass
-
-		# from payment.modifiers import PaymentModifier
-		# return [m for m in self.get_all_modifiers() if isinstance(m, PaymentModifier)]
+		if store is None and request is None:
+			raise ImproperlyConfigured("Must provide either a `store` object "
+			                           "or a `request`.")
+		if store is None:
+			store = Store.objects.get_current(request)
+		self.get_all_modifiers(store=store)
+		return self.MODIFIERS_CACHE[store.domain]['payment']
 
 	def get_active_shipping_modifier(self, shipping_modifier):
 		"""
@@ -135,3 +168,5 @@ class CartModifiersPool:
 
 
 cart_modifiers_pool = CartModifiersPool()
+pre_save.connect(cart_modifiers_pool.clear_site_cache, sender=Store)
+pre_delete.connect(cart_modifiers_pool.clear_site_cache, sender=Store)

@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 	'customer',
 	'easy_thumbnails',
 	'easy_thumbnails.optimize',
+	'ecommerce',  # must be declared to load custom commands
 	'filer',
 	'mptt',  # for filer
 	'payment',
@@ -128,23 +129,6 @@ STATIC_URL = '/static/'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 # SESSION_SAVE_EVERY_REQUEST = True
 
-############################################
-# DJANGO FILER
-
-FILER_ADMIN_ICON_SIZES = ('16', '32', '48', '80', '128')
-FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
-FILER_DUMP_PAYLOAD = False
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
-THUMBNAIL_HIGH_RESOLUTION = False
-THUMBNAIL_PRESERVE_EXTENSIONS = True
-
-THUMBNAIL_PROCESSORS = (
-	'easy_thumbnails.processors.colorspace',
-	'easy_thumbnails.processors.autocrop',
-	'filer.thumbnail_processors.scale_and_crop_with_subject_location',
-	'easy_thumbnails.processors.filters',
-)
-
 ################################################################################
 # GENERAL
 
@@ -169,29 +153,6 @@ MONEY_FORMAT = '{symbol} {minus}{amount}'  # eg.= '$ -2.00'
 
 
 @property
-def CART_MODIFIERS(self):
-	"""
-	Specifies the list of `cart-modifiers`. They are applied on	each cart item
-	and the cart final sums.
-
-	This list must start with `'shop.modifiers.defaults.DefaultCartModifier'`
-	as its first entry, followed by other optional cart modifiers.
-
-	Returns a list classes [ '[..].Class1', '[..].Class2', ... ] dynamically
-	imported by DJango
-	"""
-	from django.utils.module_loading import import_string
-
-	cart_modifiers = [
-		'shop.modifiers.DefaultCartModifier',  # basic subtotal calculator
-		'shop.modifiers.CartIncludeTaxModifier',  # add tax rate
-		# 'shop.modifiers.CartExcludedTaxModifier',  # tax already included
-		'payment.modifiers.PaymentCartModifier',  # currently does nothing
-	]
-	return [import_string(mc) for mc in cart_modifiers]
-
-
-@property
 def ORDER_WORKFLOWS(self):
 	"""
 	Specifies a list of `order-workflows`. Order workflows are applied after an
@@ -211,3 +172,39 @@ def ORDER_WORKFLOWS(self):
 		# 'shop_stripe.workflows.OrderWorkflowMixin',
 	]
 	return [import_string(mc) for mc in order_workflows]
+
+
+################################################################################
+# MAILGUN
+
+MAILGUN_API = '51441d559c9261ae9585a1e95d119c26-65b08458-0d5cf2fb'
+MAILGUN_API_URL = 'https://api.mailgun.net/v3/adposter.run'
+
+################################################################################
+# SMTP
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.mailgun.org'
+# EMAIL_HOST_USER = 'info@adposter.run'
+# EMAIL_HOST_PASSWORD = 'be16********e-0afbfc6c-c3874ef0'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# DEFAULT_FROM_EMAIL = 'info@adposter.run'
+# SERVER_EMAIL = 'info@adposter.run'
+
+################################################################################
+# DJANGO FILER
+
+FILER_ADMIN_ICON_SIZES = ('16', '32', '48', '80', '128')
+FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
+FILER_DUMP_PAYLOAD = False
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+THUMBNAIL_HIGH_RESOLUTION = False
+THUMBNAIL_PRESERVE_EXTENSIONS = True
+
+THUMBNAIL_PROCESSORS = (
+	'easy_thumbnails.processors.colorspace',
+	'easy_thumbnails.processors.autocrop',
+	'filer.thumbnail_processors.scale_and_crop_with_subject_location',
+	'easy_thumbnails.processors.filters',
+)

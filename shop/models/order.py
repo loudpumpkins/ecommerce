@@ -13,11 +13,10 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 # internal
-from customer.models import Customer
+from fsm import FSMField, transition
 from shared.fields import JSONField, MoneyField
 from shared.money import MoneyMaker
-from shared.statemachine import FSMField, transition
-from shop.managers import OrderManager
+from shop.models.managers.order import OrderManager
 from shop.models.cart import CartItem
 
 
@@ -27,6 +26,20 @@ class Order(models.Model):
 	cart on the moment of purchase. It also holds stuff like the shipping and billing addresses,
 	and keeps all the additional entities, as determined by the cart modifiers.
 	"""
+	customer = models.ForeignKey(
+		'customer.Customer',
+		on_delete=models.PROTECT,
+		verbose_name=_("Customer"),
+		related_name='orders',
+	)
+
+	store = models.ForeignKey(
+		'shop.Store',
+		on_delete=models.PROTECT,
+		verbose_name=_("Store"),
+		related_name='orders',
+	)
+
 	number = models.PositiveIntegerField(
 		_("Order Number"),
 		null=True,
@@ -64,13 +77,6 @@ class Order(models.Model):
 		'decimal_places': 2,
 	}
 	decimal_exp = Decimal('.' + '0' * decimalfield_kwargs['decimal_places'])
-
-	customer = models.ForeignKey(
-		'Customer',
-		on_delete=models.PROTECT,
-		verbose_name=_("Customer"),
-		related_name='orders',
-	)
 
 	status = FSMField(
 		default='new',
@@ -125,7 +131,6 @@ class Order(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Order")
 		verbose_name_plural = _("Orders")
 
@@ -417,7 +422,7 @@ class OrderPayment(models.Model):
 	A model to hold received payments for a given order.
 	"""
 	order = models.ForeignKey(
-		'Order',
+		Order,
 		on_delete=models.CASCADE,
 		verbose_name=_("Order"),
 		related_name='orderpayments',
@@ -447,7 +452,6 @@ class OrderPayment(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Order payment")
 		verbose_name_plural = _("Order payments")
 
@@ -460,7 +464,7 @@ class OrderItem(models.Model):
 	An item for an order.
 	"""
 	order = models.ForeignKey(
-		'Order',
+		Order,
 		on_delete=models.CASCADE,
 		related_name='items',
 		verbose_name=_("Order"),
@@ -515,7 +519,6 @@ class OrderItem(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Ordered Item")
 		verbose_name_plural = _("Ordered Items")
 

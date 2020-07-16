@@ -1,17 +1,43 @@
+import string
+
 # external
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import pre_delete, pre_save
 from django.utils.translation import gettext_lazy as _
 
-
 # internal
-from shop.models.product import Product
+from shared.fields import JSONField
+from shop.models.managers.store import StoreManager, STORE_CACHE
+
+
+def _simple_domain_name_validator(value):
+	"""
+	Validate that the given value contains no whitespaces to prevent common
+	typos.
+	"""
+	checks = ((s in value) for s in string.whitespace)
+	if any(checks):
+		raise ValidationError(
+			_("The domain name cannot contain any spaces or tabs."),
+			code='invalid',
+		)
 
 
 class Store(models.Model):
-	url = models.CharField(
-		max_length=255,
+
+	domain = models.CharField(
+		_('domain name'),
+		max_length=100,
+		validators=[_simple_domain_name_validator],
+		help_text=_("Domain name 'example.com'."),
 		unique=True,
-		help_text=_("Hostname with domain. 'https://example.com'")
+	)
+
+	name = models.CharField(
+		_('display name'),
+		help_text=_("Human readable store name."),
+		max_length=50
 	)
 
 	bucket_name = models.CharField(
@@ -19,19 +45,31 @@ class Store(models.Model):
 		help_text=_("Google bucket name")
 	)
 
-	name = models.CharField(
-		max_length=255,
-		help_text=_("The store's name")
-	)
-
 	email = models.CharField(
 		max_length=255,
-		help_text=_("The store's admin e-mail. Used in 'Contact-us'")
+		help_text=_("The store's admin e-mail. Used in 'Contact-us'.")
 	)
 
 	address = models.TextField(
 		verbose_name=_("Store Address"),
 		help_text=_("The physical address of the store. Used in desktop version."),
+	)
+
+	vendor_name = models.CharField(
+		_("Vendor's Name"),
+		max_length=50,
+	)
+
+	vendor_email = models.CharField(
+		_("Vendor's eMail"),
+		max_length=255,
+	)
+
+	vendor_extra = JSONField(
+		verbose_name=_("Extra Vendor Details"),
+		blank=True,
+		null=True,
+		help_text=_("API details and more."),
 	)
 
 	meta_title = models.CharField(
@@ -64,33 +102,49 @@ class Store(models.Model):
 					"products for the customer."),
 	)
 
-	cart_modifiers = models.TextField(
+	cart_modifiers = JSONField(
 		verbose_name=_("Default Cart Modifiers"),
 		blank=True,
 		null=True,
-		help_text=_("Path to default cart modifiers to use for this store. "
-					"Delimated by newline.\n"
-					"'shop_modifiers.DefaultCartModifier'"),
+		help_text=_('''Path to default cart modifiers to use for this store. Eg. 
+		{
+			"data": [
+				"payment.modifiers.PaypalModifier",
+				"payment.modifiers.StripeModifier",
+				"payment.modifiers.MerchantModifier"
+			]
+		}
+		'''),
 	)
 
-	payment_modifiers = models.TextField(
+	payment_modifiers = JSONField(
 		verbose_name=_("Payment Cart Modifiers"),
 		blank=True,
 		null=True,
-		help_text=_("Path to payment cart modifiers to use for this store. "
-					"Delimated by newline.\n"
-					"'shop.paypal.modifiers.PaymentModifier'\n"
-					"'shop.modifiers.StripePaymentModifier'"),
+		help_text=_('''Path to payment cart modifiers to use for this store. Eg. 
+		{
+			"data": [
+				"payment.modifiers.PaypalModifier",
+				"payment.modifiers.StripeModifier",
+				"payment.modifiers.MerchantModifier"
+			]
+		}
+		'''),
 	)
 
-	shipping_modifiers = models.TextField(
+	shipping_modifiers = JSONField(
 		verbose_name=_("Shipping Cart Modifiers"),
 		blank=True,
 		null=True,
-		help_text=_("Path to shipping cart modifiers to use for this store. "
-					"Delimated by newline.\n"
-					"'shop.paypal.modifiers.PaymentModifier'\n"
-					"'shop.modifiers.StripePaymentModifier'"),
+		help_text=_('''Path to shipping cart modifiers to use for this store. Eg. 
+		{
+			"data": [
+				"shipping.modifiers.FreeModifier",
+				"shipping.modifiers.FlatModifier",
+				"shipping.modifiers.APIModifier"
+			]
+		}
+		'''),
 	)
 
 	google_analytics = models.TextField(
@@ -114,11 +168,25 @@ class Store(models.Model):
 		help_text=_("AddThis analytics code snippet to inject."),
 	)
 
+	created_at = models.DateTimeField(
+		_("Created at"),
+		auto_now_add=True,
+	)
+
+	updated_at = models.DateTimeField(
+		_("Updated at"),
+		auto_now=True,
+	)
+
+	objects = StoreManager()
+
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Store")
 		verbose_name_plural = _("Stores")
+
+	def __str__(self):
+		return self.domain
 
 	@property
 	def single_product(self):
@@ -128,4 +196,45 @@ class Store(models.Model):
 
 	@property
 	def num_products(self):
+		from shop.models.product import Product
 		return Product.objects.filter(store=self).count()
+
+	def get_cart_modifiers(self):
+		json = self.cart_modifiers
+		if 'data' in json:
+			return [modifier for modifier in json['data']]
+		else:
+			return []
+
+	def get_payment_modifiers(self):
+		json = self.payment_modifiers
+		if 'data' in json:
+			return [modifier for modifier in json['data']]
+		else:
+			return []
+
+	def get_shipping_modifiers(self):
+		json = self.shipping_modifiers
+		if 'data' in json:
+			return [modifier for modifier in json['data']]
+		else:
+			return []
+
+
+################################################################################
+# Site Cache Management -- Signals
+
+
+def clear_site_cache(sender, **kwargs):
+	"""
+	Clear the cache (if primed) each time a site is saved or deleted.
+	"""
+	instance = kwargs['instance']
+	try:
+		del STORE_CACHE[instance.domain]
+	except KeyError:
+		pass
+
+
+pre_save.connect(clear_site_cache, sender=Store)
+pre_delete.connect(clear_site_cache, sender=Store)

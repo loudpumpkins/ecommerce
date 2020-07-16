@@ -14,7 +14,7 @@ class ProductImage(models.Model):
 	image = image.FilerImageField(on_delete=models.CASCADE)
 
 	product = models.ForeignKey(
-		'Product',
+		'shop.Product',
 		on_delete=models.CASCADE,
 	)
 
@@ -22,7 +22,6 @@ class ProductImage(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Product Image")
 		verbose_name_plural = _("Product Images")
 		ordering = ['order']

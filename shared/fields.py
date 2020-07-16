@@ -21,6 +21,7 @@ postgresql_engine_names = [
 ]
 
 if settings.DATABASES['default']['ENGINE'] in postgresql_engine_names:
+	# django already provides JSONField for postgres databases
 	from django.contrib.postgres.fields import JSONField as _JSONField
 else:
 	from jsonfield.fields import JSONField as _JSONField

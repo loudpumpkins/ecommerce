@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 
 # internal
 from shared.fields import JSONField
-from shop.managers import CartManager, CartItemManager
+from shop.models.managers.cart import CartManager, CartItemManager
 from shop.support import cart_modifiers_pool
 
 
@@ -16,7 +16,7 @@ class Cart(models.Model):
 	The shopping cart.
 	"""
 	customer = models.OneToOneField(
-		'Customer',
+		'customer.Customer',
 		on_delete=models.CASCADE,
 		related_name='cart',
 		verbose_name=_("Customer"),
@@ -28,7 +28,7 @@ class Cart(models.Model):
 	)
 
 	shipping_address = models.ForeignKey(
-		'ShippingAddress',
+		'customer.ShippingAddress',
 		on_delete=models.SET_DEFAULT,
 		null=True,
 		default=None,
@@ -36,7 +36,7 @@ class Cart(models.Model):
 	)
 
 	billing_address = models.ForeignKey(
-		'BillingAddress',
+		'customer.BillingAddress',
 		on_delete=models.SET_DEFAULT,
 		null=True,
 		default=None,
@@ -55,7 +55,6 @@ class Cart(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Shopping Cart")
 		verbose_name_plural = _("Shopping Carts")
 
@@ -195,13 +194,15 @@ class CartItem(models.Model):
 	pointer to the actual Product being purchased
 	"""
 	cart = models.ForeignKey(
-		'Cart',
+		Cart,
 		on_delete=models.CASCADE,
 		related_name='items',
 	)
 
+	quantity = models.PositiveIntegerField(_("Cart quantity"))
+
 	product = models.ForeignKey(
-		'Product',
+		'shop.Product',
 		on_delete=models.CASCADE,
 	)
 
@@ -224,7 +225,6 @@ class CartItem(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Cart item")
 		verbose_name_plural = _("Cart items")
 

@@ -1,5 +1,4 @@
 # external
-from django.core import checks
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
@@ -9,9 +8,9 @@ from django.utils.translation import gettext_lazy as _
 # internal
 from shared.fields import JSONField, MoneyField
 from shop.exceptions import ProductNotAvailable
-from shop.managers import ProductManager
 from shop.models.cart import CartItem
 from shop.models.product_image import ProductImage
+from shop.models.managers.product import ProductManager
 from shop.support import Availability
 
 
@@ -31,11 +30,11 @@ class Product(models.Model):
 	active = models.BooleanField(
 		_("Active"),
 		default=True,
-		help_text=_("Is this product publicly visible."),
+		help_text=_("Is this product publicly visible"),
 	)
 
 	store = models.ForeignKey(
-		'Store',
+		'shop.Store',
 		on_delete=models.CASCADE,
 		related_name='product'
 	)
@@ -45,26 +44,29 @@ class Product(models.Model):
 		verbose_name=_("Product Name"),
 	)
 
-	# common fields for the catalog's list- and detail views
-	slug = models.SlugField(verbose_name=_("Slug"))
+	product_code = models.CharField(
+		_("Product code"),
+		max_length=255,
+		# unique=True, # unique together with store
+	)
+
+	slug = models.SlugField(
+		_("Slug"),
+		# unique=True, # unique together with store
+	)
 
 	caption = models.TextField(
 		verbose_name=_("Caption"),
 		blank=True,
 		null=True,
-		help_text=_("Short description for the catalog list view."),
+		help_text=_("Short description for the catalog list view"),
 	)
 
 	description = models.TextField(
 		verbose_name=_("Description"),
 		blank=True,
 		null=True,
-		help_text=_("Full product description for the detail view."),
-	)
-
-	product_code = models.CharField(
-		_("Product code"),
-		max_length=255,
+		help_text=_("Full product description for the detail view"),
 	)
 
 	unit_price = MoneyField(
@@ -73,10 +75,10 @@ class Product(models.Model):
 		help_text=_("Net price for this product"),
 	)
 
-	# controlling the catalog
 	order = models.PositiveIntegerField(
 		verbose_name=_("Sort by"),
 		db_index=True,
+		help_text=_("Ascending order"),
 	)
 
 	images = models.ManyToManyField(
@@ -92,7 +94,6 @@ class Product(models.Model):
 	)
 
 	extra = JSONField(
-		editable=False,
 		verbose_name=_("Extra information about this product"),
 	)
 
@@ -113,8 +114,7 @@ class Product(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
-		unique_together = [('store', 'product_code')]
+		unique_together = [('store', 'product_code'), ('store', 'slug')]
 		ordering = ('order',)
 		verbose_name = _("Product")
 		verbose_name_plural = _("Products")
@@ -251,57 +251,3 @@ class Product(models.Model):
 		information is required to estimate the shipping costs.
 		"""
 		return 0
-
-	@classmethod
-	def check(cls, **kwargs):
-		"""
-		Internal method to check consistency of Product model declaration on
-		bootstrapping application.
-		"""
-		errors = super().check(**kwargs)
-		for cart_field in CartItem._meta.fields:
-			if cart_field.attname == 'quantity':
-				break
-		else:
-			msg = "Class `{}` must implement a field named `quantity`."
-			errors.append(checks.Error(msg.format(CartItem.__name__)))
-		for field in cls._meta.fields:
-			if field.attname == 'quantity':
-				if field.get_internal_type() != cart_field.get_internal_type():
-					msg = "Field `{}.quantity` must be of same type as `{}.quantity`."
-					errors.append(checks.Error(
-						msg.format(cls.__name__, CartItem.__name__)))
-				break
-		else:
-			msg = "Class `{}` must implement a field named `quantity`."
-			errors.append(checks.Error(msg.format(cls.__name__)))
-		return errors
-
-	# def update_search_index(self):
-	# 	"""
-	# 	Update the Document inside the Elasticsearch index after changing
-	# 	relevant parts of the product.
-	# 	"""
-	# 	documents = elasticsearch_registry.get_documents([ProductModel])
-	# 	if settings.USE_I18N:
-	# 		for language, _ in settings.LANGUAGES:
-	# 			try:
-	# 				document = next(
-	# 					doc for doc in documents if doc._language == language)
-	# 			except StopIteration:
-	# 				document = next(
-	# 					doc for doc in documents if doc._language is None)
-	# 			document().update(self)
-	# 	else:
-	# 		document = next(doc for doc in documents)
-	# 		document().update(self)
-	#
-	# def invalidate_cache(self):
-	# 	"""
-	# 	Method ``ProductCommonSerializer.render_html()`` caches the rendered
-	# 	HTML snippets. Invalidate this HTML snippet after changing relevant parts
-	# 	of the product.
-	# 	"""
-	# 	shop_app = apps.get_app_config('shop')
-	# 	if shop_app.cache_supporting_wildcard:
-	# 		cache.delete_pattern('product:{}|*'.format(self.id))

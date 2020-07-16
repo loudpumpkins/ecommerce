@@ -13,7 +13,7 @@ class Delivery(models.Model):
 	Shipping provider to keep track on each delivery.
 	"""
 	order = models.ForeignKey(
-		'Order',
+		'shop.Order',
 		on_delete=models.CASCADE,
 		related_name='deliveries'
 	)
@@ -48,7 +48,6 @@ class Delivery(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		unique_together = ['shipping_method', 'shipping_id']
 		get_latest_by = 'shipped_at'
 		verbose_name = _("Delivery")
@@ -96,7 +95,7 @@ class DeliveryItem(models.Model):
 	implementing this model.
 	"""
 	delivery = models.ForeignKey(
-		'Delivery',
+		Delivery,
 		verbose_name=_("Delivery"),
 		on_delete=models.CASCADE,
 		related_name='items',
@@ -104,7 +103,7 @@ class DeliveryItem(models.Model):
 	)
 
 	item = models.ForeignKey(
-		'OrderItem',
+		'shop.OrderItem',
 		on_delete=models.CASCADE,
 		related_name='deliver_item',
 		verbose_name=_("Ordered item"),
@@ -117,7 +116,6 @@ class DeliveryItem(models.Model):
 
 	class Meta:
 		app_label = 'shop'
-		db_table = 'shop'
 		verbose_name = _("Deliver item")
 		verbose_name_plural = _("Deliver items")
 
