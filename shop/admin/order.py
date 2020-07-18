@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from shop.transition import transition_change_notification
 
 from customer.models import Customer
+from customer.serializers import CustomerSerializer
 from fsm import FSMAdminMixin
 from shop.models.order import OrderItem, OrderPayment
 from shop.support import cart_modifiers_pool
@@ -21,6 +22,9 @@ from shop.serializers.order import OrderDetailSerializer
 
 
 class OrderPaymentInline(admin.TabularInline):
+	"""
+	Adds a list of the payments for a given order -- payment history
+	"""
 	model = OrderPayment
 	extra = 0
 
@@ -36,13 +40,18 @@ class OrderPaymentInline(admin.TabularInline):
 		return formset
 
 	def has_add_permission(self, request, obj=None):
-		assert obj is not None, "An Order object can not be added through the Django-Admin"
+		assert obj is not None, "An Order object can not be added through the " \
+		                        "Django-Admin"
 		return obj.status in ['awaiting_payment', 'refund_payment']
 
 	def has_delete_permission(self, request, obj=None):
 		return False
 
 	def get_max_num(self, request, obj=None, **kwargs):
+		"""
+		Returns the maximum number of extra inline forms to use.
+		We allow 1 more than currently exists if order is not complete yet.
+		"""
 		qs = self.model.objects.filter(order=obj)
 		if self.has_add_permission(request, obj):
 			return qs.count() + 1
@@ -66,6 +75,9 @@ class OrderPaymentInline(admin.TabularInline):
 
 
 class OrderItemInline(admin.StackedInline):
+	"""
+	Provides a list of items ordered
+	"""
 	model = OrderItem
 	extra = 0
 	fields = [
@@ -96,6 +108,7 @@ class OrderItemInline(admin.StackedInline):
 
 
 class StatusListFilter(admin.SimpleListFilter):
+	""" Filter orders by status """
 	title = _("Status")
 	parameter_name = 'status'
 
@@ -112,15 +125,17 @@ class StatusListFilter(admin.SimpleListFilter):
 
 
 class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
-	list_display = ['get_number', 'customer', 'status_name', 'get_total', 'created_at']
-	list_filter = [StatusListFilter]
+	list_display = ['get_number', 'customer', 'status_name', 'get_total',
+	                'store__domain', 'created_at']
+	list_filter = [StatusListFilter, 'store__domain']
 	fsm_field = ['status']
 	date_hierarchy = 'created_at'
 	inlines = [OrderItemInline]
 	readonly_fields = ['get_number', 'status_name', 'get_total', 'get_subtotal',
-					   'get_customer_link', 'get_outstanding_amount', 'created_at', 'updated_at',
-					   'render_as_html_extra', 'stored_request', 'is_fully_paid']
-	fields = ['get_number', 'status_name',
+					   'get_customer_link', 'get_outstanding_amount', 'created_at',
+					   'updated_at', 'render_as_html_extra', 'stored_request',
+					   'is_fully_paid']
+	fields = ['store__domain', 'get_number', 'status_name',
 			  ('created_at', 'updated_at'),
 			  'get_customer_link',
 			  ('get_subtotal', 'get_total', 'get_outstanding_amount', 'is_fully_paid'),
@@ -163,31 +178,31 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 
 	def render_as_html_extra(self, obj):
 		return self.extra_template.render(obj.extra)
-	render_as_html_extra.short_description = pgettext_lazy('admin', "Extra data")
+	render_as_html_extra.short_description = _("Extra data")
 
 	def get_customer_link(self, obj):
 		try:
-			url = reverse('admin:shop_customerproxy_change', args=(obj.customer.pk,))
-			return format_html('<a href="{0}" target="_new">{1}</a>', url, obj.customer.get_username())
+			url = reverse('admin:customer_customer_change', args=(obj.customer.pk,))
+			return format_html(
+				'<a href="{0}" target="_new">{1}</a>',
+				url,
+				obj.customer.get_username()
+			)
 		except NoReverseMatch:
 			return format_html('<strong>{0}</strong>', obj.customer.get_username())
-	get_customer_link.short_description = pgettext_lazy('admin', "Customer")
+	get_customer_link.short_description = _("Customer")
 
 	def get_search_fields(self, request):
 		search_fields = list(super().get_search_fields(request))
-		search_fields.extend(['customer__user__email', 'customer__user__last_name'])
-		try:
-			# if CustomerModel contains a number field, let search for it
-			if isinstance(CustomerModel._meta.get_field('number'), Field):
-				search_fields.append('customer__number')
-		except FieldDoesNotExist:
-			pass
+		search_fields.extend(['customer__user__email', 'customer__user__last_name',
+		                      'customer__number'])
 		return search_fields
 
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super().get_form(request, obj, **kwargs)
 		if obj:
-			# store the requested transition inside the instance, so that the model's `clean()` method can access it
+			# store the requested transition inside the instance, so that the
+			# model's `clean()` method can access it
 			obj._fsm_requested_transition = self._get_requested_transition(request)
 		return ModelForm
 
@@ -204,7 +219,7 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 class PrintInvoiceAdminMixin:
 	"""
 	A customized OrderAdmin class shall inherit from this mixin class, to add
-	methods for printing the the invoice.
+	methods for printing the invoice.
 	"""
 	def get_fields(self, request, obj=None):
 		fields = list(super().get_fields(request, obj))
@@ -227,7 +242,7 @@ class PrintInvoiceAdminMixin:
 	def _render_content(self, request, pk, template):
 		order = self.get_object(request, pk)
 		context = {'request': request, 'render_label': 'print'}
-		customer_serializer = app_settings.CUSTOMER_SERIALIZER(order.customer)
+		customer_serializer = CustomerSerializer(order.customer)
 		order_serializer = OrderDetailSerializer(order, context=context)
 		return template.render(context={
 			'customer': customer_serializer.data,
@@ -237,17 +252,17 @@ class PrintInvoiceAdminMixin:
 
 	def render_invoice(self, request, pk=None):
 		template = select_template([
-			'{}/print/invoice.html'.format(app_settings.APP_LABEL.lower()),
-			'shop/print/invoice.html'
+			'shop/print/invoice.html',
 		])
 		content = self._render_content(request, pk, template)
 		return HttpResponse(content)
 
 	def print_out(self, obj):
 		if obj.status in ['ready_for_delivery']:
-			link = reverse('admin:print_invoice', args=(obj.id,)), pgettext_lazy('admin', "Invoice")
+			link = reverse('admin:print_invoice', args=(obj.id,)), _("Invoice")
 			return format_html(
-				'<span class="object-tools"><a href="{0}" class="viewsitelink" target="_new">{1}</a></span>',
+				'<span class="object-tools"><a href="{0}" class="viewsitelink" '
+				'target="_new">{1}</a></span>',
 				*link)
 		return ''
-	print_out.short_description = pgettext_lazy('admin', "Print out")
+	print_out.short_description = _("Print out")

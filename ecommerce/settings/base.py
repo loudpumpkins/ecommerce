@@ -31,6 +31,7 @@ INSTALLED_APPS = [
 	'easy_thumbnails.optimize',
 	'ecommerce',  # must be declared to load custom commands
 	'filer',
+	'fsm',
 	'mptt',  # for filer
 	'payment',
 	'rest_framework',
@@ -132,6 +133,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 ################################################################################
 # GENERAL
 
+MASTER_EMAIL = 'admin@watermelonsalad.com'
 MAX_PURCHASE_QUANTITY = 99  # used in shop.managers.Availability
 USE_THOUSAND_SEPARATOR = True
 DEFAULT_CURRENCY = 'USD'  # only used if no currency is provided to field
