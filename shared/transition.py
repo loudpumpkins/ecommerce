@@ -4,17 +4,12 @@ from urllib.parse import urlparse
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.http.request import HttpRequest
-# from post_office import mail
-from post_office.models import EmailTemplate
 
 # internal
 from customer.serializers import CustomerSerializer
-# from shared.mailgun import mail
-from shop.models.order import Order
-from shop.models.notification import Notification
-from shop.serializers.delivery import DeliverySerializer
-from shop.serializers.order import OrderDetailSerializer
-from shop.signals import email_queued
+from shared.mailgun import send_mail
+from shop.models import Notification, Order
+from shop.serializers import DeliverySerializer, OrderDetailSerializer, StoreSerializer
 
 
 class EmulateHttpRequest(HttpRequest):
@@ -44,12 +39,15 @@ class EmulateHttpRequest(HttpRequest):
 def transition_change_notification(order):
 	"""
 	This function shall be called, after an Order object performed a transition
-	change.
+	change. `order` parameter is the latest `Order` model instance after all
+	modifications.
 	"""
 	if not isinstance(order, Order):
 		raise TypeError("Object order must be an Order model object")
-	emails_in_queue = False
-	for notification in Notification.objects.filter(transition_target=order.status):
+	notifications = Notification.objects.filter(
+		transition_target=order.status, store=order.store
+	)
+	for notification in notifications:
 		recipient = notification.get_recipient(order)
 		if recipient is None:
 			continue
@@ -60,27 +58,23 @@ def transition_change_notification(order):
 		customer_serializer = CustomerSerializer(order.customer)
 		render_context = {'request': emulated_request, 'render_label': 'email'}
 		order_serializer = OrderDetailSerializer(order, context=render_context)
+		store_serializer = StoreSerializer(order.store)
 		language = order.stored_request.get('language')
 		context = {
 			'customer': customer_serializer.data,
 			'order': order_serializer.data,
+			'store': store_serializer.data,
 			'ABSOLUTE_BASE_URI': emulated_request.build_absolute_uri().rstrip('/'),
 			'render_language': language,
 		}
 		try:
 			latest_delivery = order.delivery_set.latest()
-			context['latest_delivery'] = DeliverySerializer(latest_delivery, context=render_context).data
+			context['latest_delivery'] = \
+				DeliverySerializer(latest_delivery, context=render_context).data
 		except (AttributeError, models.ObjectDoesNotExist):
 			pass
-		try:
-			template = notification.mail_template.translated_templates.get(language=language)
-		except EmailTemplate.DoesNotExist:
-			template = notification.mail_template
+		template = notification.mail_template
 		attachments = {}
 		for notiatt in notification.notificationattachment_set.all():
 			attachments[notiatt.attachment.original_filename] = notiatt.attachment.file.file
-		mail.send(recipient, template=template, context=context,
-				  attachments=attachments, render_on_delivery=True)
-		emails_in_queue = True
-	if emails_in_queue:
-		email_queued()
+		send_mail(recipient, template=template, context=context, files=attachments)

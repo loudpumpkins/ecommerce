@@ -11,14 +11,14 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 # internal
-from shop.transition import transition_change_notification
-
 from customer.models import Customer
 from customer.serializers import CustomerSerializer
 from fsm import FSMAdminMixin
-from shop.models.order import OrderItem, OrderPayment
+from shared.transition import transition_change_notification
+from shop.admin.delivery import DeliveryOrderAdminMixin
+from shop.models import Order, OrderItem, OrderPayment
+from shop.serializers import OrderDetailSerializer
 from shop.support import cart_modifiers_pool
-from shop.serializers.order import OrderDetailSerializer
 
 
 class OrderPaymentInline(admin.TabularInline):
@@ -41,7 +41,7 @@ class OrderPaymentInline(admin.TabularInline):
 
 	def has_add_permission(self, request, obj=None):
 		assert obj is not None, "An Order object can not be added through the " \
-		                        "Django-Admin"
+								"Django-Admin"
 		return obj.status in ['awaiting_payment', 'refund_payment']
 
 	def has_delete_permission(self, request, obj=None):
@@ -126,7 +126,7 @@ class StatusListFilter(admin.SimpleListFilter):
 
 class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 	list_display = ['get_number', 'customer', 'status_name', 'get_total',
-	                'store__domain', 'created_at']
+					'store__domain', 'created_at']
 	list_filter = [StatusListFilter, 'store__domain']
 	fsm_field = ['status']
 	date_hierarchy = 'created_at'
@@ -148,6 +148,17 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 		self.extra_template = select_template([
 			'shop/admin/order-extra.html',
 		])
+
+	def get_fields(self, request, obj=None):
+		fields = list(super().get_fields(request, obj))
+		fields.extend(['shipping_address_text', 'billing_address_text'])
+		return fields
+
+	def get_readonly_fields(self, request, obj=None):
+		readonly_fields = list(super().get_readonly_fields(request, obj))
+		readonly_fields.extend(
+			['shipping_address_text', 'billing_address_text'])
+		return readonly_fields
 
 	def get_number(self, obj):
 		return obj.get_number()
@@ -195,8 +206,14 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 	def get_search_fields(self, request):
 		search_fields = list(super().get_search_fields(request))
 		search_fields.extend(['customer__user__email', 'customer__user__last_name',
-		                      'customer__number'])
+							  'customer__number', 'number', 'shipping_address_text',
+							  'billing_address_text'])
 		return search_fields
+
+	def get_inline_instances(self, request, obj=None):
+		inline_instances = list(super().get_inline_instances(request, obj))
+		inline_instances.append(OrderPaymentInline(self.model, self.admin_site))
+		return inline_instances
 
 	def get_form(self, request, obj=None, **kwargs):
 		ModelForm = super().get_form(request, obj, **kwargs)
@@ -208,8 +225,11 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 
 	def change_view(self, request, object_id, form_url='', extra_context=None):
 		assert object_id, "An Order object can not be added through the Django-Admin"
+		# status before processing / saving form
 		current_status = self.get_object(request, object_id).status
+		# process form
 		response = super().change_view(request, object_id, form_url, extra_context)
+		# status after processing / saving form
 		order = self.get_object(request, object_id)
 		if current_status != order.status:
 			transition_change_notification(order)
@@ -266,3 +286,8 @@ class PrintInvoiceAdminMixin:
 				*link)
 		return ''
 	print_out.short_description = _("Print out")
+
+
+@admin.register(Order)
+class OrderAdmin(PrintInvoiceAdminMixin, DeliveryOrderAdminMixin, BaseOrderAdmin):
+	pass

@@ -7,51 +7,8 @@ from email.utils import parseaddr
 # external
 from django.conf import settings
 
-requests.post(
-				settings.MAILGUN_API_URL + '/messages',
-				auth=("api", settings.MAILGUN_API),
-				data={"from": "Support <support@adposter.run>",
-					  "to": user.email,
-					  "o:require-tls": True,
-					  "subject": "Ad Poster | Please activate your account.",
-					  "template": "activation",
-					  "h:X-Mailgun-Variables": json.dumps({
-						  "href": "https://%s%s" % (current_site.domain, reverse_lazy("accounts:activation", kwargs={'pk': user.id,'activation_code': user.activation_code})),
-					  })
-				  })
-
-requests.post(
-			settings.MAILGUN_API_URL + '/messages',
-			auth=("api", settings.MAILGUN_API),
-			data={"from": "Support <support@adposter.run>",
-				  "to": user.email,
-				  "o:require-tls": True,
-				  "subject": "Ad Poster | An invoice was generated.",
-				  "template": "invoice",
-				  "h:X-Mailgun-Variables": json.dumps({
-					  "total": payment_amount,
-					  "email": kij_account.username,
-					  "invoice": ipn.invoice,
-					  "plan": ipn.item_name,
-					  "date": str(date.today()),
-				  })
-			  })
-
-requests.post(
-			MAILGUN_API_URL + '/messages',
-			auth=("api", MAILGUN_API),
-			files=[("attachment",("error.jpg", open(ad_setup['screenshot'], "rb").read() )),],
-			data={"from": "System <system@adposter.run>",
-				  "to": ["support@adposter.run", ad_setup['username']],
-				  "o:require-tls": True,
-				  "subject": "Ad Poster | An error occurred while attempting to post your ad.",
-				  "template": "error",
-				  "h:X-Mailgun-Variables": json.dumps({
-					  "message": "Please see the attached picture of the error for more information.",
-					  "exception": ad_setup['exception'],
-					  "post_id": post_id,
-				  })
-			})
+# internal
+from shop.models import Notification
 
 
 def format_sender(sender):
@@ -73,6 +30,15 @@ def format_sender(sender):
 def send_mail(to, cc=None, bcc=None, sender=None, subject=None, text=None,
 			  html=None, template=None, context=None, files=None):
 	"""
+	Send email using mailgun services.
+	Settings file must declare `MAILGUN_API_URL` and `MAILGUN_API`
+
+	`context` keys limited to:
+		'customer' -> customer serializer data
+		'order' -> order detail derializer data
+		'store' -> store serializer data
+		'ABSOLUTE_BASE_URI' -> absolute uri
+		'render_language' -> language (for future use)
 
 	:param to: list | str - ['name@example.com', 'name@example2.com']
 	:param cc: str
@@ -84,9 +50,9 @@ def send_mail(to, cc=None, bcc=None, sender=None, subject=None, text=None,
 	:param template: str - template name
 	:param context: dict - template variables - dict must be JSON convertible
 	:param files: dict - { 'filename' : 'fieldfield.file.file' }
-	:return:
+	:return -> NoReturn:
 	"""
-	data = {'to': to}
+	data = {'to': to, 'o:require-tls': True}
 	if cc is not None:
 		data['cc'] = cc
 	if bcc is not None:
@@ -102,6 +68,8 @@ def send_mail(to, cc=None, bcc=None, sender=None, subject=None, text=None,
 	if html is not None:
 		data['html'] = html
 	if template is not None:
+		assert template in Notification.MailTemplate.values, \
+			"{} is not a known template".format(template)
 		data['template'] = template
 	if context is not None:
 		# template variables

@@ -4,25 +4,29 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from filer.fields.file import FilerFileField
 
-# internal
-from shared.fields import ChoiceEnum, ChoiceEnumField
-
-
-class Notify(ChoiceEnum):
-	RECIPIENT = 0, _("Recipient")
-	VENDOR = 1, _("Vendor")
-	CUSTOMER = 2, _("Customer")
-	NOBODY = 9, _("Nobody")
-
-
-class MailTemplate(ChoiceEnum):
-	WELCOME = 0, _("Welcome")
-
 
 class Notification(models.Model):
 	"""
-	A task executed on receiving a signal.
+	Notify vendor/staff/customer with a custom email upon an event occurring such
+	as an order status change or new user registration.
+
+	example usage:
+
+	notifications = Notification.objects.filter(
+		transition_target=order.status, store=order.store
+	)
+	for notification in notifications:
+		* send email with context *
 	"""
+	class Notify(models.IntegerChoices):
+		RECIPIENT = 0, _("Recipient")
+		VENDOR = 1, _("Vendor")
+		CUSTOMER = 2, _("Customer")
+		NOBODY = 9, _("Nobody")
+
+	class MailTemplate(models.TextChoices):
+		WELCOME = "welcome", _("Welcome")
+
 	store = models.ForeignKey(
 		'shop.Store',
 		on_delete=models.CASCADE,
@@ -39,9 +43,9 @@ class Notification(models.Model):
 		verbose_name=_("Event"),
 	)
 
-	notify = ChoiceEnumField(
+	notify = models.IntegerField(
 		_("Whom to notify"),
-		enum_type=Notify,
+		choices=Notify.choices,
 	)
 
 	recipient = models.ForeignKey(
@@ -52,9 +56,10 @@ class Notification(models.Model):
 		limit_choices_to={'is_staff': True},
 	)
 
-	mail_template = ChoiceEnumField(
-		_("Whom to notify"),
-		enum_type=MailTemplate,
+	mail_template = models.CharField(
+		_("Template to use"),
+		max_length=20,
+		choices=MailTemplate.choices,
 	)
 
 	class Meta:
@@ -67,11 +72,11 @@ class Notification(models.Model):
 		return self.name
 
 	def get_recipient(self, order):
-		if self.notify is Notify.RECIPIENT:
+		if self.notify is self.Notify.RECIPIENT:
 			return self.recipient.email
-		if self.notify is Notify.CUSTOMER:
+		if self.notify is self.Notify.CUSTOMER:
 			return order.customer.email
-		if self.notify is Notify.VENDOR:
+		if self.notify is self.Notify.VENDOR:
 			return order.store.vendor_email
 
 
