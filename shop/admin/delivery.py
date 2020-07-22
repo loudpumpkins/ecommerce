@@ -12,6 +12,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 # internal
+from customer.serializers import CustomerSerializer
 from shop.admin.order import OrderItemInline
 from shop.models import OrderItem, Delivery
 from shop.serializers import DeliverySerializer, OrderDetailSerializer
@@ -31,7 +32,7 @@ class OrderItemForm(models.ModelForm):
 		if 'instance' in kwargs:
 			kwargs.setdefault('initial', {})
 			deliver_quantity = kwargs['instance'].quantity - \
-							   self.get_delivered(kwargs['instance'])
+							   		self.get_delivered(kwargs['instance'])
 			kwargs['initial'].update(deliver_quantity=deliver_quantity)
 		else:
 			deliver_quantity = None
@@ -112,6 +113,7 @@ class OrderItemInlineDelivery(OrderItemInline):
 
 
 def get_shipping_choices():
+	# TODO : ad request into get_shipping_modifiers. Look in admin/order.py in get_formsets for inspiration or admin/notification.py ModelForm __init__
 	choices = [sm.get_choice() for sm in cart_modifiers_pool.get_shipping_modifiers()]
 	return choices
 
@@ -197,7 +199,7 @@ class DeliveryInline(admin.TabularInline):
 
 class DeliveryOrderAdminMixin:
 	"""
-	Add this mixin to the class defining the OrderAdmin
+	OrderAdmin mixin. Required for the print_out to work.
 	"""
 	def get_urls(self):
 		my_urls = [
@@ -209,13 +211,10 @@ class DeliveryOrderAdminMixin:
 		return my_urls
 
 	def render_delivery_note(self, request, delivery_pk=None):
-		template = select_template([
-			'{}/print/delivery-note.html'.format(app_settings.APP_LABEL.lower()),
-			'shop/print/delivery-note.html'
-		])
-		delivery = DeliveryModel.objects.get(pk=delivery_pk)
+		template = select_template(['shop/print/delivery-note.html'])
+		delivery = Delivery.objects.get(pk=delivery_pk)
 		context = {'request': request, 'render_label': 'print'}
-		customer_serializer = app_settings.CUSTOMER_SERIALIZER(delivery.order.customer)
+		customer_serializer = CustomerSerializer(delivery.order.customer)
 		order_serializer = OrderDetailSerializer(delivery.order, context=context)
 		delivery_serializer = DeliverySerializer(delivery, context=context)
 		content = template.render({
@@ -227,9 +226,11 @@ class DeliveryOrderAdminMixin:
 		return HttpResponse(content)
 
 	def get_inline_instances(self, request, obj=None):
-		assert obj is not None, "An Order object can not be added through the Django-Admin"
-		assert hasattr(obj, 'associate_with_delivery'), "Add 'shop.shipping.workflows.SimpleShippingWorkflowMixin' " \
-			"(or a class inheriting from thereof) to SHOP_ORDER_WORKFLOWS."
+		assert obj is not None, "An Order object can not be added through the " \
+								"Django-Admin"
+		assert hasattr(obj, 'associate_with_delivery'), "Add 'shop.shipping" \
+			".workflows.SimpleShippingWorkflowMixin' (or a class inheriting " \
+			"from thereof) to store's order workflow."
 		inline_instances = list(super().get_inline_instances(request, obj))
 		if obj.associate_with_delivery:
 			if obj.allow_partial_delivery:
@@ -244,5 +245,5 @@ class DeliveryOrderAdminMixin:
 	def save_related(self, request, form, formsets, change):
 		super().save_related(request, form, formsets, change)
 		if form.instance.status == 'pack_goods' and 'status' in form.changed_data:
-			orderitem_formset = [fs for fs in formsets if issubclass(fs.model, OrderItemModel)][0]
+			orderitem_formset = [fs for fs in formsets if issubclass(fs.model, OrderItem)][0]
 			form.instance.update_or_create_delivery(orderitem_formset.cleaned_data)

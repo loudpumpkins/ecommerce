@@ -65,6 +65,10 @@ class TransitionNotAllowed(Exception):
         super(TransitionNotAllowed, self).__init__(*args, **kwargs)
 
 
+class InvalidResultState(Exception):
+    """Raised when we got invalid result state"""
+
+
 class Transition(object):
     def __init__(self, method, source, target, on_error, conditions, permission, custom):
         self.method = method
@@ -418,3 +422,21 @@ def transition(field, source='*', target=None, on_error=None, conditions=[], per
         return func
 
     return inner_transition
+
+
+class State(object):
+    def get_state(self, model, transition, result, args=[], kwargs={}):
+        raise NotImplementedError
+
+
+class RETURN_VALUE(State):
+    def __init__(self, *allowed_states):
+        self.allowed_states = allowed_states if allowed_states else None
+
+    def get_state(self, model, transition, result, args=[], kwargs={}):
+        if self.allowed_states is not None:
+            if result not in self.allowed_states:
+                raise InvalidResultState(
+                    '{} is not in list of allowed states\n{}'.format(
+                        result, self.allowed_states))
+        return result
