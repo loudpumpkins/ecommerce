@@ -117,31 +117,16 @@ class Store(models.Model):
 		'''),
 	)
 
-	payment_modifiers = JSONField(
-		verbose_name=_("Payment Cart Modifiers"),
+	order_workflow = JSONField(
+		verbose_name=_("Order Workflow Mixins"),
 		blank=True,
 		null=True,
-		help_text=_('''Path to payment cart modifiers to use for this store. Eg. 
+		help_text=_('''Path to workflow modifiers to use for this store. Eg. 
 		{
 			"data": [
 				"payment.modifiers.PaypalModifier",
 				"payment.modifiers.StripeModifier",
 				"payment.modifiers.MerchantModifier"
-			]
-		}
-		'''),
-	)
-
-	shipping_modifiers = JSONField(
-		verbose_name=_("Shipping Cart Modifiers"),
-		blank=True,
-		null=True,
-		help_text=_('''Path to shipping cart modifiers to use for this store. Eg. 
-		{
-			"data": [
-				"shipping.modifiers.FreeModifier",
-				"shipping.modifiers.FlatModifier",
-				"shipping.modifiers.APIModifier"
 			]
 		}
 		'''),
@@ -206,15 +191,22 @@ class Store(models.Model):
 		else:
 			return []
 
-	def get_payment_modifiers(self):
-		json = self.payment_modifiers
-		if 'data' in json:
-			return [modifier for modifier in json['data']]
-		else:
-			return []
+	# def get_payment_modifiers(self):
+	# 	json = self.payment_modifiers
+	# 	if 'data' in json:
+	# 		return [modifier for modifier in json['data']]
+	# 	else:
+	# 		return []
 
-	def get_shipping_modifiers(self):
-		json = self.shipping_modifiers
+	# def get_shipping_modifiers(self):
+	# 	json = self.shipping_modifiers
+	# 	if 'data' in json:
+	# 		return [modifier for modifier in json['data']]
+	# 	else:
+	# 		return []
+
+	def get_workflows(self):
+		json = self.order_workflow
 		if 'data' in json:
 			return [modifier for modifier in json['data']]
 		else:

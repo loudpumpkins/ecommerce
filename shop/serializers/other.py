@@ -5,7 +5,7 @@ from rest_framework.fields import empty
 
 # internal
 from shop.models.cart import Cart
-from shared.fields import MoneyField
+from shared.rest_fields import MoneyField
 
 
 class AvailabilitySerializer(serializers.Serializer):

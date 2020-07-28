@@ -8,3 +8,4 @@ from shop.serializers.other import (AvailabilitySerializer, AddToCartSerializer,
                                     ImagesField)
 from shop.serializers.product import (ProductSerializer, ProductSelectSerializer,
                                       ProductSummarySerializer)
+from shop.serializers.store import StoreSerializer

@@ -3,7 +3,7 @@ from django.db import models
 
 # internal
 from customer.models import Customer
-from shop.support import cart_modifiers_pool
+from shop.modifier import cart_modifiers_pool
 
 
 class CartManager(models.Manager):

@@ -2,7 +2,8 @@
 from rest_framework import serializers
 
 # internal
-from shared.fields import ChoiceEnum, MoneyField
+from shared.fields import ChoiceEnum
+from shared.rest_fields import MoneyField
 from shop.models import Cart, CartItem
 from shop.serializers.product import ProductSummarySerializer
 

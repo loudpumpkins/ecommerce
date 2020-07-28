@@ -2,9 +2,9 @@
 from rest_framework import serializers
 
 # internal
-from shop.serializers import OrderItemSerializer
+from shop.serializers.order import OrderItemSerializer
 from shop.models import Delivery, DeliveryItem
-from shop.support import cart_modifiers_pool
+from shop.modifier import cart_modifiers_pool
 
 
 class DeliveryItemSerializer(serializers.ModelSerializer):

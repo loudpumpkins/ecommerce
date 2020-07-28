@@ -20,12 +20,61 @@ from shop.models.managers.order import OrderManager
 from shop.models.cart import CartItem
 
 
-class Order(models.Model):
+class WorkflowMixinMetaclass(models.base.ModelBase):  # inherit models metaclass
 	"""
-	An Order is the "in process" counterpart of the shopping cart, which freezes the state of the
-	cart on the moment of purchase. It also holds stuff like the shipping and billing addresses,
-	and keeps all the additional entities, as determined by the cart modifiers.
+	Add configured Workflow mixin classes to ``Order`` and ``OrderPayment`` to
+	customize all kinds of state transitions in a pluggable manner.
 	"""
+	def __new__(mcs, name, bases, attrs):
+		bases = tuple(settings.GET_ORDER_WORKFLOWS()) + bases
+		# merge the dicts of TRANSITION_TARGETS
+		attrs.update(
+			_transition_targets=attrs.pop('TRANSITION_TARGETS'),
+			_auto_transitions={}
+		)
+		for b in reversed(bases):
+			TRANSITION_TARGETS = getattr(b, 'TRANSITION_TARGETS', {})
+			try:
+				delattr(b, 'TRANSITION_TARGETS')
+			except AttributeError:
+				pass
+			if set(TRANSITION_TARGETS.keys()).intersection(attrs['_transition_targets']):
+				msg = "Mixin class {} already contains a transition named '{}'"
+				raise ImproperlyConfigured(
+					msg.format(b.__name__, ', '.join(TRANSITION_TARGETS.keys())))
+			attrs['_transition_targets'].update(TRANSITION_TARGETS)
+			attrs['_auto_transitions'].update(mcs.add_to_auto_transitions(b))
+		Model = super().__new__(mcs, name, bases, attrs)
+		return Model
+
+	@classmethod
+	def add_to_auto_transitions(cls, base):
+		result = {}
+		for name, method in base.__dict__.items():
+			if callable(method) and hasattr(method, '_django_fsm'):
+				# @transition decorated methods get _django_fsm injected into them
+				for name, transition in method._django_fsm.transitions.items():
+					if transition.custom.get('auto'):
+						result.update({name: method})
+		return result
+
+
+class Order(models.Model, metaclass=WorkflowMixinMetaclass):
+	"""
+	An Order is the "in process" counterpart of the shopping cart, which freezes
+	the state of the cart on the moment of purchase. It also holds stuff like
+	the shipping and billing addresses, and keeps all the additional entities,
+	as determined by the cart modifiers.
+	"""
+	# default targets for the FSM - can and should add middle targets in
+	# settings.GET_ORDER_WORKFLOWS()
+	TRANSITION_TARGETS = {
+		'new': _("New order without content"),
+		'created': _("Order freshly created"),
+		'payment_confirmed': _("Payment confirmed"),
+		'payment_declined': _("Payment declined"),
+	}
+
 	customer = models.ForeignKey(
 		'customer.Customer',
 		on_delete=models.PROTECT,
@@ -119,45 +168,12 @@ class Order(models.Model):
 		help_text=_("Parts of the Request objects from the time of purchase."),
 	)
 
-	# default targets for the FSM - can modify in settings.ORDER_WORKFLOWS
-	TRANSITION_TARGETS = {
-		'new': _("New order without content"),
-		'created': _("Order freshly created"),
-		'payment_confirmed': _("Payment confirmed"),
-		'payment_declined': _("Payment declined"),
-	}
-
 	objects = OrderManager()
 
 	class Meta:
 		app_label = 'shop'
 		verbose_name = _("Order")
 		verbose_name_plural = _("Orders")
-
-	def __new__(cls, name, bases, attrs):
-		"""
-		Add configured Workflow mixin classes to ``Order`` and ``OrderPayment``
-		to customize all kinds of state transitions in a pluggable manner.
-		"""
-		bases = tuple(settings.ORDER_WORKFLOWS) + bases
-		# merge the dicts of TRANSITION_TARGETS
-		attrs.update(_transition_targets={}, _auto_transitions={})
-		for b in reversed(bases):
-			TRANSITION_TARGETS = getattr(b, 'TRANSITION_TARGETS', {})
-			try:
-				delattr(b, 'TRANSITION_TARGETS')
-			except AttributeError:
-				pass
-			if set(TRANSITION_TARGETS.keys()).intersection(
-					attrs['_transition_targets']):
-				msg = "Mixin class {} already contains a transition named '{}'"
-				raise ImproperlyConfigured(msg.format(b.__name__, ', '.join(
-					TRANSITION_TARGETS.keys())))
-			attrs['_transition_targets'].update(TRANSITION_TARGETS)
-			attrs['_auto_transitions'].update(
-				cls.add_to_auto_transitions(b))
-		Model = super().__new__(cls, name, bases, attrs)
-		return Model
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -168,18 +184,6 @@ class Order(models.Model):
 
 	def __repr__(self):
 		return "<{}(pk={})>".format(self.__class__.__name__, self.pk)
-
-	# required to inject OrderWorkflows
-	@classmethod
-	def add_to_auto_transitions(cls, base):
-		result = {}
-		for name, method in base.__dict__.items():
-			# TODO - figure out what on earth this is doing exactly
-			if callable(method) and hasattr(method, '_django_fsm'):
-				for name, transition in method._django_fsm.transitions.items():
-					if transition.custom.get('auto'):
-						result.update({name: method})
-		return result
 
 	def get_or_assign_number(self):
 		"""
@@ -330,7 +334,8 @@ class Order(models.Model):
 		:param with_notification: If ``True``, all notifications for the state
 		of this Order object are executed.
 		"""
-		# from shop.transition import transition_change_notification
+		# inner import to avoid circular import
+		from shared.transition import transition_change_notification
 
 		auto_transition = self._auto_transitions.get(self.status)
 		if callable(auto_transition):
@@ -341,9 +346,7 @@ class Order(models.Model):
 		self._total = Order.round_amount(self._total)
 		super().save(**kwargs)
 		if with_notification:
-			# transition_change_notification(self)
-			#  TODO - implement transition change notification
-			pass
+			transition_change_notification(self)
 
 	@cached_property
 	def amount_paid(self):

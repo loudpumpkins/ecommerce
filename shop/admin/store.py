@@ -7,7 +7,7 @@ from shop.models.store import Store
 from shop.models.product import Product
 
 
-@admin.register(Store)
+# @admin.register(Store)  # registered in __init__.py
 class StoreAdmin(admin.ModelAdmin):
 	base_model = Store
 	list_display = ['domain', 'name', 'bucket_name', 'get_num_products']
@@ -45,8 +45,7 @@ class StoreAdmin(admin.ModelAdmin):
 		(_("Modifiers"), {
 			'fields': [
 				'cart_modifiers',
-				'payment_modifiers',
-				'shipping_modifiers'
+				'order_workflow',
 			],
 		}),
 		(_("Dates"), {

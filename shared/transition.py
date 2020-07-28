@@ -9,13 +9,15 @@ from django.http.request import HttpRequest
 from customer.serializers import CustomerSerializer
 from shared.mailgun import send_mail
 from shop.models import Notification, Order
-from shop.serializers import DeliverySerializer, OrderDetailSerializer, StoreSerializer
+from shop.serializers import (DeliverySerializer, OrderDetailSerializer,
+							  StoreSerializer)
 
 
 class EmulateHttpRequest(HttpRequest):
 	"""
 	Use this class to emulate a HttpRequest object, when templates must be rendered
-	asynchronously, for instance when an email must be generated out of an Order object.
+	asynchronously, for instance when an email must be generated out of an Order
+	object.
 	"""
 	def __init__(self, customer, stored_request):
 		super().__init__()

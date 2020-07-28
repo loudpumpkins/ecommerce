@@ -18,11 +18,11 @@ class Notification(models.Model):
 	for notification in notifications:
 		* send email with context *
 	"""
-	class Notify(models.IntegerChoices):
-		RECIPIENT = 0, _("Recipient")
-		VENDOR = 1, _("Vendor")
-		CUSTOMER = 2, _("Customer")
-		NOBODY = 9, _("Nobody")
+	class Notify(models.TextChoices):
+		RECIPIENT = "recipient", _("Recipient")
+		VENDOR = "vendor", _("Vendor")
+		CUSTOMER = "customer", _("Customer")
+		NOBODY = "nobody", _("Nobody")
 
 	class MailTemplate(models.TextChoices):
 		WELCOME = "welcome", _("Welcome")
@@ -43,8 +43,9 @@ class Notification(models.Model):
 		verbose_name=_("Event"),
 	)
 
-	notify = models.IntegerField(
+	notify = models.CharField(
 		_("Whom to notify"),
+		max_length=20,
 		choices=Notify.choices,
 	)
 

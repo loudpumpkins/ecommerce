@@ -35,7 +35,7 @@ def send_mail(to, cc=None, bcc=None, sender=None, subject=None, text=None,
 
 	`context` keys limited to:
 		'customer' -> customer serializer data
-		'order' -> order detail derializer data
+		'order' -> order detail serializer data
 		'store' -> store serializer data
 		'ABSOLUTE_BASE_URI' -> absolute uri
 		'render_language' -> language (for future use)

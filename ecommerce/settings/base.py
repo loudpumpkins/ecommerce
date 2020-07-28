@@ -13,7 +13,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+# \\Django\ecommerce\ecommerce
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Root directory for this django project
+# \\Django\ecommerce
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, os.path.pardir))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '1g6q%!tyz4)9dye5*$0amaa(bqn9=i9+4p7^%220vjpo$$u@ae'
@@ -21,7 +26,7 @@ SECRET_KEY = '1g6q%!tyz4)9dye5*$0amaa(bqn9=i9+4p7^%220vjpo$$u@ae'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -118,17 +123,33 @@ USE_L10N = True  # Datetime format to local
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
-
-STATIC_URL = '/static/'
-
-
 # SESSIONS
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 # SESSION_SAVE_EVERY_REQUEST = True
+
+################################################################################
+# STATIC / MEDIA
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+# Absolute path to the directory that holds static files.
+# Example: "/home/media/media.lawrence.com/static/"
+STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+
+# URL that handles the static files served from STATIC_ROOT.
+# Example: "http://media.lawrence.com/static/"
+STATIC_URL = '/static/'
+
+# Absolute path to the directory that holds media.
+# Example: "/home/media/media.lawrence.com/"
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash.
+# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
+MEDIA_URL = '/media/'
 
 ################################################################################
 # GENERAL
@@ -154,12 +175,12 @@ https://docs.microsoft.com/en-us/globalization/locale/currency-formatting
 MONEY_FORMAT = '{symbol} {minus}{amount}'  # eg.= '$ -2.00'
 
 
-@property
-def ORDER_WORKFLOWS(self):
+def GET_ORDER_WORKFLOWS():
 	"""
-	Specifies a list of `order-workflows`. Order workflows are applied after an
-	order has been created and conduct the vendor through the steps of receiving
-	the payments until fulfilling the shipment.
+	Specifies a list of `order-workflows`. Order workflows will inject
+	`TRANSITION_TARGETS` into the order model's default finite state machine and
+	the logic that allows the transitions. This prevents illegal order state
+	transitions and gives a plugable way to add/remove payment/shipping methods.
 
 	Returns a list classes [ '[..].Class1', '[..].Class2', ... ] dynamically
 	imported by DJango
@@ -167,13 +188,13 @@ def ORDER_WORKFLOWS(self):
 	from django.utils.module_loading import import_string
 
 	order_workflows = [
-		'shop.payment.workflows.ManualPaymentWorkflowMixin',
-		'shop.payment.workflows.CancelOrderWorkflowMixin',
-		'shop.shipping.workflows.PartialDeliveryWorkflowMixin',
+		'payment.workflows.ManualPaymentWorkflowMixin',
+		'payment.workflows.CancelOrderWorkflowMixin',
+		'shipping.workflows.PartialDeliveryWorkflowMixin',
 		# 'shop_paypal.payment.OrderWorkflowMixin',
 		# 'shop_stripe.workflows.OrderWorkflowMixin',
 	]
-	return [import_string(mc) for mc in order_workflows]
+	return [import_string(wf) for wf in order_workflows]
 
 
 ################################################################################

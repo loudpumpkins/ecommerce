@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 # internal
 from fsm import transition, RETURN_VALUE
-from shop.models import Order
+from shop import models  # use `models.Order` to avoid circular imports
 
 
 class ManualPaymentWorkflowMixin:
@@ -21,7 +21,7 @@ class ManualPaymentWorkflowMixin:
 	_manual_payment_transitions = TRANSITION_TARGETS.keys()
 
 	def __init__(self, *args, **kwargs):
-		if not isinstance(self, Order):
+		if not isinstance(self, models.Order):
 			raise ImproperlyConfigured("class 'ManualPaymentWorkflowMixin' is "
                                        "not of type 'Order'")
 		CancelOrderWorkflowMixin.CANCELABLE_SOURCES.update(self._manual_payment_transitions)

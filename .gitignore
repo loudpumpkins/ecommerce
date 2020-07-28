@@ -6,7 +6,6 @@ ecommerce/settings/production.py
 ecommerce/settings/local.py
 
 
-
 ## Ignore contents of folders except for the __init__.py file and keep the folder itself
 
 customer/migrations/*
@@ -21,6 +20,11 @@ shipping/migrations/*
 shop/migrations/*
 !shop/migrations/__init__.py
 
+
+# static / media
+
+media/*
+static/*
 
 
 ## Django stuff

@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 # internal
 from fsm import transition
-from shop.models import Delivery, DeliveryItem
+from shop import models  # use `models.Delivery` to avoid circular imports
 
 
 class SimpleShippingWorkflowMixin:
@@ -112,7 +112,7 @@ class CommissionGoodsWorkflowMixin(SimpleShippingWorkflowMixin):
         """
         Update or create a Delivery object for all items of this Order object.
         """
-        delivery, _ = Delivery.objects.get_or_create(
+        delivery, _ = models.Delivery.objects.get_or_create(
             order=self,
             shipping_id__isnull=True,
             shipped_at__isnull=True,
@@ -120,7 +120,7 @@ class CommissionGoodsWorkflowMixin(SimpleShippingWorkflowMixin):
             defaults={'fulfilled_at': timezone.now()}
         )
         for item in self.items.all():
-            DeliveryItem.objects.create(
+            models.DeliveryItem.objects.create(
                 delivery=delivery,
                 item=item,
                 quantity=item.quantity,
@@ -201,7 +201,7 @@ class PartialDeliveryWorkflowMixin(CommissionGoodsWorkflowMixin):
         Update or create a Delivery object and associate with selected ordered
         items.
         """
-        delivery, _ = Delivery.objects.get_or_create(
+        delivery, _ = models.Delivery.objects.get_or_create(
             order=self,
             shipping_id__isnull=True,
             shipped_at__isnull=True,
@@ -213,7 +213,7 @@ class PartialDeliveryWorkflowMixin(CommissionGoodsWorkflowMixin):
         # with this delivery
         for data in orderitem_data:
             if data['deliver_quantity'] > 0 and not data['canceled']:
-                DeliveryItem.objects.create(
+                models.DeliveryItem.objects.create(
                     delivery=delivery,
                     item=data['id'],
                     quantity=data['deliver_quantity'],

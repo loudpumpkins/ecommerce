@@ -6,9 +6,8 @@ from django.contrib.auth import get_user_model
 from django.forms import fields, models, widgets
 from django.utils.translation import gettext_lazy as _
 
-# from django_fsm import RETURN_VALUE
-
 # internal
+from fsm import RETURN_VALUE
 from shop.models.notification import Notification, NotificationAttachment
 from shop.models import Order
 
@@ -35,10 +34,10 @@ class NotificationForm(models.ModelForm):
     def __init__(self, *args, **kwargs):
         if kwargs.get('instance'):
             initial = kwargs.get('initial', {})
-            if kwargs['instance'].notify is Notification.Notify.RECIPIENT:
+            if kwargs['instance'].notify == Notification.Notify.RECIPIENT.value:
                 initial['notify_recipient'] = kwargs['instance'].recipient_id
             else:
-                initial['notify_recipient'] = kwargs['instance'].notify.name
+                initial['notify_recipient'] = kwargs['instance'].notify
             kwargs.update(initial=initial)
         super().__init__(*args, **kwargs)
         self.fields['transition_target'].widget.choices = \
@@ -51,9 +50,9 @@ class NotificationForm(models.ModelForm):
             if isinstance(transition.target, str):
                 choices[transition.target] = \
                     Order.get_transition_name(transition.target)
-            # elif isinstance(transition.target, RETURN_VALUE):
-            #     for target in transition.target.allowed_states:
-            #         choices[target] = Order.get_transition_name(target)
+            elif isinstance(transition.target, RETURN_VALUE):
+                for target in transition.target.allowed_states:
+                    choices[target] = Order.get_transition_name(target)
         return choices.items()
 
     def get_recipient_choices(self):
@@ -61,8 +60,8 @@ class NotificationForm(models.ModelForm):
         Instead of offering one field for the recipient and one for whom to
         notify, we merge staff users with the context dependent recipients.
         """
-        choices = [(n.name, str(n)) for n in Notification.Notify if n is not
-                   Notification.Notify.RECIPIENT]
+        choices = [(membr.value, membr.label) for membr in Notification.Notify
+                   if membr is not Notification.Notify.RECIPIENT]
         for user in get_user_model().objects.filter(is_staff=True):
             email = '{0} <{1}>'.format(user.get_full_name(), user.email)
             choices.append((user.id, email))
@@ -70,19 +69,18 @@ class NotificationForm(models.ModelForm):
 
     def save(self, commit=True):
         obj = super().save(commit=commit)
+        #  self.cleaned_data['notify_recipient'] eg: 'vendor' or '11' for a user
         try:
             obj.recipient = get_user_model().objects.get(
                                     pk=self.cleaned_data['notify_recipient'])
             obj.notify = Notification.Notify.RECIPIENT
         except (ValueError, get_user_model().DoesNotExist):
             obj.recipient = None
-            obj.notify = getattr(Notification.Notify,
-                                 self.cleaned_data['notify_recipient'],
-                                 Notification.Notify.NOBODY)
+            obj.notify = self.cleaned_data['notify_recipient']
         return obj
 
 
-@admin.register(Notification)
+# @admin.register(Notification)  # registered in __init__.py
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ['name', 'transition_name', 'get_recipient', 'mail_template',
                     'num_attachments']
@@ -99,7 +97,7 @@ class NotificationAdmin(admin.ModelAdmin):
     num_attachments.short_description = _("Attachments")
 
     def get_recipient(self, obj):
-        if obj.notify is Notification.Notify.RECIPIENT:
+        if obj.notify == Notification.Notify.RECIPIENT.value:
             return '{0} <{1}>'.format(obj.recipient.get_full_name(),
                                       obj.recipient.email)
         else:

@@ -1,8 +1,6 @@
 # external
-from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
-from django.db.models.fields import Field, FieldDoesNotExist
 from django.forms import widgets
 from django.http import HttpResponse
 from django.template.loader import select_template
@@ -11,14 +9,12 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 # internal
-from customer.models import Customer
 from customer.serializers import CustomerSerializer
 from fsm import FSMAdminMixin
 from shared.transition import transition_change_notification
-from shop.admin.delivery import DeliveryOrderAdminMixin
-from shop.models import Order, OrderItem, OrderPayment
-from shop.serializers import OrderDetailSerializer
-from shop.support import cart_modifiers_pool
+from shop.models.order import OrderItem, OrderPayment
+from shop.serializers.order import OrderDetailSerializer
+from shop.modifier import cart_modifiers_pool
 
 
 class OrderPaymentInline(admin.TabularInline):
@@ -126,7 +122,7 @@ class StatusListFilter(admin.SimpleListFilter):
 
 class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 	list_display = ['get_number', 'customer', 'status_name', 'get_total',
-					'store__domain', 'created_at']
+					'get_domain', 'created_at']
 	list_filter = [StatusListFilter, 'store__domain']
 	fsm_field = ['status']
 	date_hierarchy = 'created_at'
@@ -135,7 +131,7 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 					   'get_customer_link', 'get_outstanding_amount', 'created_at',
 					   'updated_at', 'render_as_html_extra', 'stored_request',
 					   'is_fully_paid']
-	fields = ['store__domain', 'get_number', 'status_name',
+	fields = ['get_domain', 'get_number', 'status_name',
 			  ('created_at', 'updated_at'),
 			  'get_customer_link',
 			  ('get_subtotal', 'get_total', 'get_outstanding_amount', 'is_fully_paid'),
@@ -159,6 +155,10 @@ class BaseOrderAdmin(FSMAdminMixin, admin.ModelAdmin):
 		readonly_fields.extend(
 			['shipping_address_text', 'billing_address_text'])
 		return readonly_fields
+
+	def get_domain(self, obj):
+		return obj.store.domain
+	get_domain.short_description = _("Store domain name")
 
 	def get_number(self, obj):
 		return obj.get_number()
@@ -288,6 +288,6 @@ class PrintInvoiceAdminMixin:
 	print_out.short_description = _("Print out")
 
 
-@admin.register(Order)
-class OrderAdmin(PrintInvoiceAdminMixin, DeliveryOrderAdminMixin, BaseOrderAdmin):
-	pass
+# @admin.register(Order)  # registered in __init__.py
+# class OrderAdmin(PrintInvoiceAdminMixin, DeliveryOrderAdminMixin, BaseOrderAdmin):
+# 	pass

@@ -3,10 +3,10 @@ from django.utils import timezone
 from rest_framework import serializers
 
 # internal
-from shared.fields import MoneyField
+from shared.rest_fields import MoneyField
 from shop.models import Cart, Order, OrderItem
-from shop.serializers import ProductSummarySerializer
-from shop.support import cart_modifiers_pool
+from shop.serializers.product import ProductSummarySerializer
+from shop.modifier import cart_modifiers_pool
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

@@ -9,9 +9,7 @@ from django.utils.translation import get_language_from_request
 from rest_framework import serializers
 
 # internal
-from customer.models import Customer
-from shared.fields import MoneyField
-from shop.models import OrderItem, Product
+from shop.models import Product
 
 
 class ProductSerializer(serializers.ModelSerializer):

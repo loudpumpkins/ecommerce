@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 # internal
 from shop.models.order import OrderItem
-from shop.support import cart_modifiers_pool
+from shop.modifier import cart_modifiers_pool
 
 
 class Delivery(models.Model):

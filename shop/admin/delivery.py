@@ -14,9 +14,11 @@ from django.utils.translation import gettext_lazy as _
 # internal
 from customer.serializers import CustomerSerializer
 from shop.admin.order import OrderItemInline
-from shop.models import OrderItem, Delivery
-from shop.serializers import DeliverySerializer, OrderDetailSerializer
-from shop.support import cart_modifiers_pool
+from shop.models.delivery import Delivery
+from shop.models.order import OrderItem
+from shop.serializers.delivery import DeliverySerializer
+from shop.serializers.order import OrderDetailSerializer
+from shop.modifier import cart_modifiers_pool
 
 
 class OrderItemForm(models.ModelForm):
@@ -112,17 +114,27 @@ class OrderItemInlineDelivery(OrderItemInline):
 	show_ready.short_description = _("Ready for delivery")
 
 
-def get_shipping_choices():
-	# TODO : ad request into get_shipping_modifiers. Look in admin/order.py in get_formsets for inspiration or admin/notification.py ModelForm __init__
-	choices = [sm.get_choice() for sm in cart_modifiers_pool.get_shipping_modifiers()]
-	return choices
+# def get_shipping_choices():
+# 	# TODO : ad request into get_shipping_modifiers. Look in admin/order.py in get_formsets for inspiration or admin/notification.py ModelForm __init__
+# 	choices = [sm.get_choice() for sm in cart_modifiers_pool.get_shipping_modifiers()]
+# 	return choices
 
 
 class DeliveryForm(models.ModelForm):
 	shipping_method = models.ChoiceField(
 		label=_("Shipping by"),
-		choices=get_shipping_choices,
+		# choices=get_shipping_choices,
+		choices=(0, '--None--'),
 	)
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		instance = kwargs.get('instance', None)
+		if instance is not None:
+			choices = [sm.get_choice() for sm in
+			           cart_modifiers_pool.get_shipping_modifiers(
+				                                        store=instance.store)]
+			self.fields['shipping_method'].choices = choices
 
 	class Meta:
 		model = Delivery
@@ -234,7 +246,8 @@ class DeliveryOrderAdminMixin:
 		inline_instances = list(super().get_inline_instances(request, obj))
 		if obj.associate_with_delivery:
 			if obj.allow_partial_delivery:
-				# replace `OrderItemInline` by `OrderItemInlineDelivery` for that instance.
+				# replace `OrderItemInline` by `OrderItemInlineDelivery` for
+				# that instance.
 				inline_instances = [
 					OrderItemInlineDelivery(self.model, self.admin_site) if isinstance(instance, OrderItemInline) else instance
 					for instance in inline_instances
