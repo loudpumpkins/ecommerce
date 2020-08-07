@@ -1,18 +1,10 @@
 import string
-from importlib import import_module
-import warnings
 
 # external
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import models, DEFAULT_DB_ALIAS
+from django.db import models
 from django.db.models.fields import FieldDoesNotExist
-from django.dispatch import receiver
-from django.utils import timezone
-from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy as _
 
 # internal

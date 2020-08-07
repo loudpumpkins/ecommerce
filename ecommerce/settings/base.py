@@ -27,6 +27,7 @@ SECRET_KEY = '1g6q%!tyz4)9dye5*$0amaa(bqn9=i9+4p7^%220vjpo$$u@ae'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+INTERNAL_IPS = ['127.0.0.1']  # for debug toolbar
 
 # Application definition
 
@@ -47,9 +48,11 @@ INSTALLED_APPS = [
 	'django.contrib.sessions',
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
+	'debug_toolbar',
 ]
 
 MIDDLEWARE = [
+	'debug_toolbar.middleware.DebugToolbarMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',
@@ -57,6 +60,8 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'shop.middleware.CustomerMiddleware',
+	'shop.middleware.StoreMiddleware',
 ]
 
 ROOT_URLCONF = 'ecommerce.urls'
@@ -72,6 +77,9 @@ TEMPLATES = [
 				'django.template.context_processors.request',
 				'django.contrib.auth.context_processors.auth',
 				'django.contrib.messages.context_processors.messages',
+				'shop.context_processors.add_customer',
+				'shop.context_processors.add_cart',
+				'shop.context_processors.add_store',
 			],
 		},
 	},

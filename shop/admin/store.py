@@ -20,7 +20,7 @@ class StoreAdmin(admin.ModelAdmin):
 	fieldsets = (
 		(None, {
 			'fields': [
-				('domain', 'name'),
+				('domain', 'name', 'slug'),
 				('bucket_name', 'currency_code', 'has_filter'),
 			],
 		}),
@@ -52,6 +52,8 @@ class StoreAdmin(admin.ModelAdmin):
 			'fields': ['created_at', 'updated_at'],
 		}),
 	)
+
+	prepopulated_fields = {'slug': ['domain']}
 
 	def get_num_products(self, obj):
 		return Product.objects.filter(store=obj).count()

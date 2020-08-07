@@ -62,7 +62,7 @@ class CartItemManager(models.Manager):
 		the result set according to the defined modifiers.
 		"""
 		cart_items = self.filter(cart=cart, quantity__gt=0).order_by('updated_at')
-		for modifier in cart_modifiers_pool.get_all_modifiers():
+		for modifier in cart_modifiers_pool.get_all_modifiers(request.store):
 			cart_items = modifier.arrange_cart_items(cart_items, request)
 		return cart_items
 

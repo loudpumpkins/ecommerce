@@ -391,18 +391,11 @@ class CartModifiersPool:
 		except KeyError:
 			pass
 
-	def get_all_modifiers(self, request=None, store=None):
+	def get_all_modifiers(self, store):
 		"""
 		Returns all registered modifiers of the shop provided or the shop in
 		the request.
-		Must provide either a `store` object or a `request`.
 		"""
-		if store is None and request is None:
-			raise ImproperlyConfigured("Must provide either a `store` object "
-									   "or a `request`.")
-		if store is None:
-			store = Store.objects.get_current(request)
-
 		# data cached
 		if store.domain in self.MODIFIERS_CACHE:
 			return self.MODIFIERS_CACHE[store.domain]
@@ -427,21 +420,19 @@ class CartModifiersPool:
 
 		return self.MODIFIERS_CACHE[store.domain]
 
-	def get_shipping_modifiers(self, request=None, store=None):
+	def get_shipping_modifiers(self, store):
 		"""
 		Returns all registered shipping modifiers of this shop instance.
 		Must provide either a `store` object or a `request`.
 		"""
-		return [m for m in self.get_all_modifiers(request=request, store=store) if
-		        isinstance(m, ShippingModifier)]
+		return [m for m in self.get_all_modifiers(store) if isinstance(m, ShippingModifier)]
 
-	def get_payment_modifiers(self, request=None, store=None):
+	def get_payment_modifiers(self, store):
 		"""
 		Returns all registered payment modifiers of this shop instance.
 		Must provide either a `store` object or a `request`.
 		"""
-		return [m for m in self.get_all_modifiers(request=request, store=store) if
-		        isinstance(m, PaymentModifier)]
+		return [m for m in self.get_all_modifiers(store) if isinstance(m, PaymentModifier)]
 
 	def get_active_shipping_modifier(self, shipping_modifier):
 		"""

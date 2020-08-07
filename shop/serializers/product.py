@@ -1,11 +1,9 @@
 # external
 from django.core import exceptions
 from django.core.cache import cache
-from django.template import TemplateDoesNotExist
 from django.template.loader import select_template
 from django.utils.html import strip_spaces_between_tags
-from django.utils.safestring import mark_safe, SafeText
-from django.utils.translation import get_language_from_request
+from django.utils.safestring import mark_safe
 from rest_framework import serializers
 
 # internal
@@ -45,26 +43,16 @@ class ProductSerializer(serializers.ModelSerializer):
 		if not self.label:
 			msg = "The Product Serializer must be configured using a `label` field."
 			raise exceptions.ImproperlyConfigured(msg)
-		app_label = product._meta.app_label.lower()
 		request = self.context['request']
-		cache_key = 'product:{0}|{1}-{2}-{3}-{4}-{5}'.format(product.id, app_label,
-			self.label, product.product_model, postfix,
-			get_language_from_request(request))
+		cache_key = 'product:{0}|{1}-{2}-{3}'.format(
+								product.id, self.label, product.slug, postfix)
 		content = cache.get(cache_key)
 		if content:
 			return mark_safe(content)
-		params = [
-			(app_label, self.label, product.product_model, postfix),
-			(app_label, self.label, 'product', postfix),
-			('shop', self.label, product.product_model, postfix),
-			('shop', self.label, 'product', postfix),
-		]
-		try:
-			template = select_template(['{0}/products/{1}-{2}-{3}.html'.format(*p)
-										for p in params])
-		except TemplateDoesNotExist:
-			return SafeText("<!-- no such template: '{0}/products/{1}-{2}-{3}.html' -->"
-							.format(*params[0]))
+		template = select_template([
+			'shop/products/{0}-{1}.html'.format(self.label, postfix),
+		])
+
 		# when rendering emails, we require an absolute URI, so that media can
 		# be accessed from the mail client
 		absolute_base_uri = request.build_absolute_uri('/').rstrip('/')
@@ -98,8 +86,6 @@ class ProductSummarySerializer(ProductSerializer):
 	Default serializer to create a summary from our Product model. This summary
 	then is used to render various list views, such as the catalog-, the cart-,
 	and the list of ordered items.
-	In case the Product model is polymorphic, this shall serialize the smallest
-	common denominator of all product information.
 	"""
 	media = serializers.SerializerMethodField(
 		help_text="Returns a rendered HTML snippet containing a sample image "

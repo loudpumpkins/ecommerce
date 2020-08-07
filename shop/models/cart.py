@@ -96,7 +96,7 @@ class Cart(models.Model):
 		# This calls all the pre_process_cart methods and the pre_process_cart_
 		# item for each item,before processing the cart. This allows to prepare
 		# and collect data on the cart.
-		for modifier in cart_modifiers_pool.get_all_modifiers():
+		for modifier in cart_modifiers_pool.get_all_modifiers(request.store):
 			modifier.pre_process_cart(self, request, raise_exception)
 			for item in items:
 				modifier.pre_process_cart_item(self, item, request, raise_exception)
@@ -110,7 +110,7 @@ class Cart(models.Model):
 			self.subtotal += item.line_total
 
 		# Iterate over the registered modifiers, to process the cart's summary
-		for modifier in cart_modifiers_pool.get_all_modifiers():
+		for modifier in cart_modifiers_pool.get_all_modifiers(request.store):
 			for item in items:
 				modifier.post_process_cart_item(self, item, request)
 			modifier.process_cart(self, request)
@@ -118,7 +118,7 @@ class Cart(models.Model):
 		# This calls the post_process_cart method from cart modifiers, if any.
 		# It allows for a last bit of processing on the "finished" cart, before
 		# it is displayed
-		for modifier in reversed(cart_modifiers_pool.get_all_modifiers()):
+		for modifier in reversed(cart_modifiers_pool.get_all_modifiers(request.store)):
 			modifier.post_process_cart(self, request)
 
 		# Cache updated cart items
@@ -267,6 +267,6 @@ class CartItem(models.Model):
 			return
 		self.refresh_from_db()
 		self.extra_rows = OrderedDict()  # reset the dictionary
-		for modifier in cart_modifiers_pool.get_all_modifiers():
+		for modifier in cart_modifiers_pool.get_all_modifiers(request.store):
 			modifier.process_cart_item(self, request)
 		self._dirty = False

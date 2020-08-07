@@ -1,0 +1,12 @@
+{# It is used to render the figure in each line item when printing an order or delivery-note #}
+<div class="media">
+	<a href="{{ product.get_absolute_url }}">
+    {% load thumbnail %}
+    {% thumbnail product.sample_image 320x320 crop as thumb %}{# 4x subsampled for higher printers resolution #}
+    <img class="mr-3" width="80" height="80" src="{{ thumb.url }}" />
+	</a>
+	<div class="media-body">
+		<h5 class="mt-0"><a href="{{ product.get_absolute_url }}">{{ product.product_name }}</a></h5>
+		{{ product.caption|truncatewords_html:30 }}
+	</div>
+</div>

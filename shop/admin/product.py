@@ -37,6 +37,9 @@ class ProductAdmin(admin.ModelAdmin):
         (_("Text Fields"), {
             'fields': ['caption', 'description'],
         }),
+        (_("Meta Fields"), {
+            'fields': ['meta_keywords', 'meta_description'],
+        }),
         (_("JSON Field"), {
             'fields': ['extra'],
         }),

@@ -40,6 +40,12 @@ class Store(models.Model):
 		max_length=50
 	)
 
+	slug = models.SlugField(
+		_('slug name'),
+		help_text=_("Used internally to identify templates to use."),
+		unique=True,
+	)
+
 	bucket_name = models.CharField(
 		max_length=255,
 		help_text=_("Google bucket name")

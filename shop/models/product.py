@@ -3,6 +3,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
 from django.db.models.functions import Coalesce
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 # internal
@@ -67,6 +68,20 @@ class Product(models.Model):
 		blank=True,
 		null=True,
 		help_text=_("Full product description for the detail view"),
+	)
+
+	meta_keywords = models.TextField(
+		verbose_name=_("Meta Keywords"),
+		blank=True,
+		null=True,
+		help_text=_("Comma separated product keyword description."),
+	)
+
+	meta_description = models.TextField(
+		verbose_name=_("Meta Description"),
+		blank=True,
+		null=True,
+		help_text=_("Full SEO friendly product description."),
 	)
 
 	unit_price = MoneyField(
@@ -145,8 +160,7 @@ class Product(models.Model):
 		"""
 		Hook for returning the canonical Django URL of this product.
 		"""
-		# TODO - complete function
-		raise NotImplementedError("Method get_absolute_url() must be implemented.")
+		return reverse('shop:product-detail', args=(self.slug,))
 
 	def get_price(self, request):
 		"""

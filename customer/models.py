@@ -4,8 +4,6 @@ import warnings
 
 # external
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.db import models, DEFAULT_DB_ALIAS
 from django.template.loader import select_template
 from django.utils import timezone
@@ -35,11 +33,11 @@ class Customer(models.Model):
 		related_name='customer',
 	)
 
-	store = models.ForeignKey(
-		'shop.Store',
-		on_delete=models.CASCADE,
-		related_name='customers'
-	)
+	# store = models.ForeignKey(
+	# 	'shop.Store',
+	# 	on_delete=models.CASCADE,
+	# 	related_name='customers'
+	# )
 
 	number = models.PositiveIntegerField(
 		_("Customer Number"),
@@ -69,7 +67,7 @@ class Customer(models.Model):
 	class Meta:
 		verbose_name = _("Customer")
 		verbose_name_plural = _("Customers")
-		unique_together = [('store', 'user')]
+		# unique_together = [('store', 'user')]
 
 	def __str__(self):
 		return self.get_username()
@@ -82,22 +80,18 @@ class Customer(models.Model):
 
 	@property
 	def first_name(self):
-		# pending deprecation: warnings.warn("Property first_name is deprecated and will be removed")
 		return self.user.first_name
 
 	@first_name.setter
 	def first_name(self, value):
-		# pending deprecation: warnings.warn("Property first_name is deprecated and will be removed")
 		self.user.first_name = value
 
 	@property
 	def last_name(self):
-		# pending deprecation: warnings.warn("Property last_name is deprecated and will be removed")
 		return self.user.last_name
 
 	@last_name.setter
 	def last_name(self, value):
-		# pending deprecation: warnings.warn("Property last_name is deprecated and will be removed")
 		self.user.last_name = value
 
 	@property
@@ -153,7 +147,8 @@ class Customer(models.Model):
 			self.recognized = CustomerState.GUEST
 			if commit:
 				self.save(update_fields=['recognized'])
-			# TODO fix below - shop.models.customer.py - BaseCustomer
+			# TODO send and receive signal -- suggestion below
+			# customer_recognized = Signal(providing_args=['customer', 'request'])
 			# customer_recognized.send(sender=self.__class__, customer=self, request=request)
 
 	@property
@@ -171,7 +166,8 @@ class Customer(models.Model):
 			self.recognized = CustomerState.REGISTERED
 			if commit:
 				self.save(update_fields=['recognized'])
-			# TODO fix below - shop.models.customer.py - BaseCustomer
+			# TODO send and receive signal -- suggestion below
+			# customer_recognized = Signal(providing_args=['customer', 'request'])
 			# customer_recognized.send(sender=self.__class__, customer=self, request=request)
 
 	@property

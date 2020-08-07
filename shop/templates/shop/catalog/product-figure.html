@@ -1,0 +1,10 @@
+<figure class="figure">
+	<a href="{{ product.product_url }}">
+		<h5>{{ product.product_name }}</h5>
+		<div>{{ product.media }}</div>
+	</a>
+	<figcaption class="figure-caption mt-2">
+		<div>Price: <strong>{{ product.price }}</strong></div>
+		<div>{{ product.caption|safe }}</div>
+	</figcaption>
+</figure>
