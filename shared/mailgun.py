@@ -49,7 +49,8 @@ def send_mail(to, cc=None, bcc=None, sender=None, subject=None, text=None,
 	:param html: str - '<html>HTML version of the body</html>'
 	:param template: str - template name
 	:param context: dict - template variables - dict must be JSON convertible
-	:param files: dict - { 'filename' : 'fieldfield.file.file' }
+	:param files: dict - { 'filename' : 'fieldfield.file' }
+		'file' can also be an in-memory file. eg: open("files/test.jpg","rb").read()
 	:return -> NoReturn:
 	"""
 	data = {'to': to, 'o:require-tls': True}

@@ -1,6 +1,6 @@
 {% extends "shop/base.html" %}
 {% load static %}
-
+{% load thumbnail %}
 
 {% block title %}
 	<title>{{ product.product_name }} | {{ store.name }}</title>
@@ -16,12 +16,13 @@
 {% block content %}
 
       <div>
-        <h1></h1>
-
-
-
-        <p></p>
-
+        <h1>{{ product.product_name }} | {{ product.product_code }}</h1>
+        {% for image in product_object.images %}
+          {% thumbnail image 160x160 crop %}
+          <img width="{{ image.width }}" height="{{ image.height }}" src="{{ image.url }}" />
+        {% endfor %}
+        <p>{{ product.description }}</p>
+        <span>Price: {{ product.price }}</span>
       </div>
 
 {% endblock %}

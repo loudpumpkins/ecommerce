@@ -177,7 +177,7 @@ class Order(models.Model, metaclass=WorkflowMixinMetaclass):
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.logger = logging.getLogger('shop.order')
+		self.logger = logging.getLogger(__name__)
 
 	def __str__(self):
 		return self.get_number()

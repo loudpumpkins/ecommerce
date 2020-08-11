@@ -1,3 +1,5 @@
+import logging
+
 # external
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.functional import SimpleLazyObject
@@ -6,6 +8,8 @@ from django.utils import timezone
 # internal
 from customer.models import Customer
 from shop.models.store import Store
+
+logger = logging.getLogger(__name__)
 
 
 def get_customer(request):

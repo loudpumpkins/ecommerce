@@ -1,5 +1,4 @@
 # external
-from filer.models.imagemodels import Image
 from rest_framework import serializers
 from rest_framework.fields import empty
 
@@ -102,20 +101,20 @@ class AddToCartSerializer(serializers.Serializer):
 		}
 
 
-class ImagesField(serializers.Field):
-	"""
-	A serializer field used to create the many-to-many relations for models
-	inheriting from the unmanaged :class:`shop.models.product.ProductImage`.
-
-	Usage in serializers to import/export product model data:
-
-	class MyProductSerializer():
-		...
-		images = ImagesField()
-		...
-	"""
-	def to_representation(self, value):
-		return list(value.values_list('pk', flat=True))
-
-	def to_internal_value(self, data):
-		return list(Image.objects.filter(pk__in=data))
+# class ImagesField(serializers.Field):
+# 	"""
+# 	A serializer field used to create the many-to-many relations for models
+# 	inheriting from the unmanaged :class:`shop.models.product.ProductImage`.
+#
+# 	Usage in serializers to import/export product model data:
+#
+# 	class MyProductSerializer():
+# 		...
+# 		images = ImagesField()
+# 		...
+# 	"""
+# 	def to_representation(self, value):
+# 		return list(value.values_list('pk', flat=True))
+#
+# 	def to_internal_value(self, data):
+# 		return list(Image.objects.filter(pk__in=data))

@@ -51,6 +51,48 @@ class Store(models.Model):
 		help_text=_("Google bucket name")
 	)
 
+	has_filter = models.BooleanField(
+		_("Has Filter"),
+		default=False,
+		help_text=_("Should the front-end try to provide an option to filter "
+		            "products for the customer."),
+	)
+
+	cart_thumbnail_size = models.CharField(
+		max_length=255,
+		help_text=_(
+			"Thumbnail size of products in catalog list. eg: '488x488'.")
+	)
+
+	catalog_thumbnail_size = models.CharField(
+		max_length=255,
+		help_text=_("Thumbnail size of products in catalog list. eg: '488x488'.")
+	)
+
+	email_thumbnail_size = models.CharField(
+		max_length=255,
+		help_text=_(
+			"Thumbnail size of products in catalog list. eg: '488x488'.")
+	)
+
+	order_thumbnail_size = models.CharField(
+		max_length=255,
+		help_text=_(
+			"Thumbnail size of products in catalog list. eg: '488x488'.")
+	)
+
+	print_thumbnail_size = models.CharField(
+		max_length=255,
+		help_text=_(
+			"Thumbnail size of products in catalog list. eg: '488x488'.")
+	)
+
+	watch_thumbnail_size = models.CharField(
+		max_length=255,
+		help_text=_(
+			"Thumbnail size of products in catalog list. eg: '488x488'.")
+	)
+
 	email = models.CharField(
 		max_length=255,
 		help_text=_("The store's admin e-mail. Used in 'Contact-us'.")
@@ -101,39 +143,19 @@ class Store(models.Model):
 		help_text=_("Currency code to use for this store.")
 	)
 
-	has_filter = models.BooleanField(
-		_("Has Filter"),
-		default=False,
-		help_text=_("Should the front-end try to provide an option to filter "
-					"products for the customer."),
-	)
-
 	cart_modifiers = JSONField(
 		verbose_name=_("Default Cart Modifiers"),
 		blank=True,
 		null=True,
-		help_text=_('''Path to default cart modifiers to use for this store. Eg. 
-		{
-			"data": [
-				"payment.modifiers.PaypalModifier",
-				"payment.modifiers.StripeModifier",
-				"payment.modifiers.MerchantModifier"
-			]
-		}
-		'''),
-	)
-
-	order_workflow = JSONField(
-		verbose_name=_("Order Workflow Mixins"),
-		blank=True,
-		null=True,
-		help_text=_('''Path to workflow modifiers to use for this store. Eg. 
-		{
-			"data": [
-				"payment.modifiers.PaypalModifier",
-				"payment.modifiers.StripeModifier",
-				"payment.modifiers.MerchantModifier"
-			]
+		help_text=_('''Path to default cart modifiers to use for this store. 
+		"shop.modifiers.DefaultCartModifier" is mandatory. Eg.: <br>
+		{<br>
+		&nbsp;&nbsp;"data": [<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;"shop.modifiers.DefaultCartModifier",<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;"shop.modifiers.CartIncludeTaxModifier",<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;"shipping.modifiers.SelfCollectionModifier",<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;"payment.modifiers.PayInAdvanceModifier"<br>
+		&nbsp;&nbsp;]<br>
 		}
 		'''),
 	)

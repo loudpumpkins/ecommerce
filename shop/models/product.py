@@ -10,7 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from shared.fields import JSONField, MoneyField
 from shop.exceptions import ProductNotAvailable
 from shop.models.cart import CartItem
-from shop.models.product_image import ProductImage
 from shop.models.managers.product import ProductManager
 from shop.support import Availability
 
@@ -94,11 +93,6 @@ class Product(models.Model):
 		verbose_name=_("Sort by"),
 		db_index=True,
 		help_text=_("Ascending order"),
-	)
-
-	images = models.ManyToManyField(
-		'filer.Image',
-		through=ProductImage,
 	)
 
 	quantity = models.PositiveIntegerField(

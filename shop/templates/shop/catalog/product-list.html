@@ -15,43 +15,27 @@
 
 {% block content %}
 
-    <div>
-      <h1>All products</h1>
-      {% for product in products.results %}
-        <div>
-          {% include product_figure %}
-        </div>
-      {% endfor %}
-    </div>
+  <div>
+    <h1>All products</h1>
+    {% for product in products.results %}
+      <div>
+      start
+        {% include "shop/catalog/product-figure.html" %}
+      end
+      </div>
+    {% empty %}
+      <div>No products</div>
+    {% endfor %}
+  </div>
 
-  {% include "shop/catalog/pagination.html" %}
+  {% if paginator.display_page_controls %}
+    <nav>
+      <ul>{{ paginator.to_html }}</ul>
+    </nav>
+  {% endif %}
 
 {% endblock %}
 
 
 {% block javascript %}
-{% endblock %}
-
-
-
-{% block catalog-list %}
-	{% addtoblock "css" %}<link href="{% sass_src 'shop/css/catalog-list.scss' %}" rel="stylesheet" type="text/css" />{% endaddtoblock %}
-	{% with product_figure=product_figure|default:"shop/catalog/product-figure.html" %}
-<shop-catalog-list infinite-scroll="{% if pagination == 'paginator' %}false{% else %}true{% endif %}">
-	<div ng-if="catalog.count===undefined" class="shop-catalog-list">
-	{% for product in data.results %}
-		<div class="shop-list-item">{% include product_figure %}</div>
-	{% endfor %}
-	</div>
-	<div ng-cloak ng-if="catalog.count>=0" class="shop-catalog-list">
-		<div class="shop-list-item" ng-repeat="product in catalog.products">
-		{% include product_figure with ng=1 %}
-		</div>
-	</div>
-</shop-catalog-list>
-	{% endwith %}
-{% endblock catalog-list %}
-
-{% block pagination %}
-	{% include "shop/catalog/pagination.html" %}
 {% endblock %}

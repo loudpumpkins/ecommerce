@@ -33,12 +33,10 @@ INTERNAL_IPS = ['127.0.0.1']  # for debug toolbar
 
 INSTALLED_APPS = [
 	'customer',
-	'easy_thumbnails',
+	'easy_thumbnails',  # https://github.com/SmileyChris/easy-thumbnails
 	'easy_thumbnails.optimize',
-	'ecommerce',  # must be declared to load custom commands
-	'filer',
+	'ecommerce',  # declared to load `custom commands`
 	'fsm',
-	'mptt',  # for filer
 	'payment',
 	'rest_framework',
 	'shop',
@@ -137,6 +135,70 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 # SESSION_SAVE_EVERY_REQUEST = True
 
 ################################################################################
+# Logging
+
+LOGGING = {
+	'version': 1,
+	'disable_existing_loggers': True,
+	'loggers': {
+		'shop': {
+			'handlers': ['developer-console'],
+			'level': 'DEBUG',
+			'propagate': False,
+		},
+		'django': {
+			'handlers': ['console'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		# 'django.request': {
+		# 	'handlers': ['file'],
+		# 	'level': 'WARNING',  # HTTP 5XX = ERROR, 4XX = WARNING, rest = INFO
+		# 	'propagate': True,  # let log record propagate to 'django' logger
+		# },
+	},
+	'handlers': {
+		'developer-console': {
+			'level': 'DEBUG',
+			'class': 'logging.StreamHandler',
+			'formatter': 'colour',
+		},
+		'console': {
+			'level': 'INFO',
+			'class': 'logging.StreamHandler',
+			'formatter': 'simple',
+		},
+		# 'file': {
+		# 	'level': 'WARNING',
+		# 	'class': 'logging.FileHandler',  # maybe set to 'socket'
+		# 	'filename': '/log/debug.log',
+		# 	'formatter': 'verbose',
+		# },
+	},
+	'filters': {
+		'require_debug_false': {
+			'()': 'django.utils.log.RequireDebugFalse'
+		}
+	},
+	'formatters': {
+		'simple': {
+			'format': '[%(asctime)s %(module)s] %(levelname)s: %(message)s'
+		},
+		'verbose': {
+			'format': '[%(asctime)s] %(name)s::%(funcName)s::line %(lineno)d - '
+			          '%(levelname)s - %(message)s'
+		},
+		'colour': {
+			'()': 'ecommerce.settings.logger.DjangoColorsFormatter',  # colored output
+			'format': '[%(asctime)s] %(name)s::%(funcName)s::line %(lineno)d - '
+			          '%(levelname)s - %(message)s'
+		}
+	},
+
+
+}
+
+################################################################################
 # STATIC / MEDIA
 
 # Static files (CSS, JavaScript, Images)
@@ -224,18 +286,42 @@ MAILGUN_API_URL = 'https://api.mailgun.net/v3/adposter.run'
 # SERVER_EMAIL = 'info@adposter.run'
 
 ################################################################################
-# DJANGO FILER
+# THUMBNAIL - https://easy-thumbnails.readthedocs.io/en/latest/usage/
 
-FILER_ADMIN_ICON_SIZES = ('16', '32', '48', '80', '128')
-FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
-FILER_DUMP_PAYLOAD = False
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
-THUMBNAIL_HIGH_RESOLUTION = False
-THUMBNAIL_PRESERVE_EXTENSIONS = True
+# FILER_ADMIN_ICON_SIZES = ('16', '32', '48', '80', '128')
+# FILER_ALLOW_REGULAR_USERS_TO_ADD_ROOT_FOLDERS = True
+# FILER_DUMP_PAYLOAD = False
+# FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+# THUMBNAIL_HIGH_RESOLUTION = False
+# THUMBNAIL_PRESERVE_EXTENSIONS = True
 
+THUMBNAIL_DEBUG = DEBUG
+
+# https://easy-thumbnails.readthedocs.io/en/latest/ref/processors/
 THUMBNAIL_PROCESSORS = (
-	'easy_thumbnails.processors.colorspace',
-	'easy_thumbnails.processors.autocrop',
-	'filer.thumbnail_processors.scale_and_crop_with_subject_location',
-	'easy_thumbnails.processors.filters',
+	# 'easy_thumbnails.processors.colorspace',  # bw=False, replace_alpha=False
+	# 'easy_thumbnails.processors.autocrop',  # autocrop=False
+	'easy_thumbnails.processors.scale_and_crop',  # crop=F, upscale=F, zoom=None
+	'easy_thumbnails.processors.filters',  # detail=False, sharpen=False
+	'easy_thumbnails.processors.background',  # background=None - fill difference
 )
+
+# default thumbnail options for product images on the admin pages
+THUMBNAIL_WIDGET_OPTIONS = {'size': (120, 120)}
+
+# <img src="{{ model.image|thumbnail_url:'alias' }}" alt="">
+# {% thumbnail [source] [alias] [options] as [variable] %}
+# {% thumbnail [source] [alias] [options] %}
+THUMBNAIL_ALIASES = {
+	'': {
+		'small': {
+			'size': (100, 100), 'background': 'white', 'quality': 50,
+		},
+		'medium': {
+			'size': (200, 200), 'background': 'white', 'sharpen': True,
+		},
+		'large': {
+			'size': (400, 400), 'background': 'white', 'detail': True,
+		},
+	},
+}

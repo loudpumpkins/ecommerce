@@ -1,8 +1,9 @@
 # external
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-from filer.fields.file import FilerFileField
 
 
 class Notification(models.Model):
@@ -81,18 +82,32 @@ class Notification(models.Model):
 			return order.store.vendor_email
 
 
+def get_file_filename(instance, filename):
+	store_slug = instance.store.slug
+	return "%s/notifications/attachments/%s" % (store_slug, filename)
+
+
 class NotificationAttachment(models.Model):
 	notification = models.ForeignKey(
 		Notification,
 		on_delete=models.CASCADE,
+		related_name='attachments'
 	)
 
-	attachment = FilerFileField(
-		on_delete=models.SET_NULL,
-		related_name='email_attachment',
+	attachment = models.FileField(
+		upload_to=get_file_filename,
+		verbose_name='Attachments',
 		null=True,
 		blank=True,
 	)
 
 	class Meta:
 		app_label = 'shop'
+
+
+@receiver(post_delete, sender=NotificationAttachment)
+def submission_delete(sender, instance, **kwargs):
+	"""
+	Delete attachment files from media when a notification is deleted.
+	"""
+	instance.image.delete(False)

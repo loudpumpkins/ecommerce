@@ -45,7 +45,6 @@ class StoreAdmin(admin.ModelAdmin):
 		(_("Modifiers"), {
 			'fields': [
 				'cart_modifiers',
-				'order_workflow',
 			],
 		}),
 		(_("Dates"), {

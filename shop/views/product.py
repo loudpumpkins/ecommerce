@@ -1,4 +1,5 @@
 import os
+import logging
 from urllib.parse import urlsplit
 
 # external
@@ -22,6 +23,8 @@ from shop.serializers import ProductSerializer, ProductSummarySerializer
 
 ################################################################################
 # shop.views.product.py -- Support
+
+logger = logging.getLogger(__name__)
 
 
 class ProductListPagination(pagination.LimitOffsetPagination):
@@ -174,10 +177,10 @@ class ProductListView(generics.ListAPIView):
 	context_data_name = 'products'
 
 	def get(self, request, *args, **kwargs):
-		if self.get_queryset().count() == 1:
-			# if store has only one product, redirect to that product
-			redirect_to = self.get_queryset().first().get_absolute_url()
-			return HttpResponseRedirect(redirect_to)
+		# if self.get_queryset().count() == 1:
+		# 	# if store has only one product, redirect to that product
+		# 	redirect_to = self.get_queryset().first().get_absolute_url()
+		# 	return HttpResponseRedirect(redirect_to)
 
 		response = self.list(request, *args, **kwargs)
 		# TODO: find a better way to invalidate the cache.
@@ -189,9 +192,8 @@ class ProductListView(generics.ListAPIView):
 	def get_template_names(self):
 		# if a store needs custom HTML, make a new template named :
 		# product-list-{domain slug}.html
-		store = Store.objects.get_current(self.request)
 		return [
-			'shop/catalog/product-list-%s.html' % store.slug,
+			'shop/catalog/product-list-%s.html' % self.request.store.slug,
 			'shop/catalog/product-list.html',
 		]
 
@@ -207,7 +209,7 @@ class ProductListView(generics.ListAPIView):
 
 	def get_queryset(self):
 		qs = self.product_model.objects.filter(
-					self.limit_choices_to, active=True, store=self.request.store)
+				self.limit_choices_to, active=True, store=self.request.store)
 		return qs
 
 
@@ -254,8 +256,9 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 		# product-detail-{domain slug}.html
 		product = self.get_object()
 		return [
-			'shop/catalog/product-detail-%s-%s.html' % (product.store.slug, product.slug),
-			'shop/catalog/product-detail-%s.html' % product.store.slug,
+			'shop/catalog/product-detail-%s-%s.html' % (self.request.store.slug,
+			                                            product.slug),
+			'shop/catalog/product-detail-%s.html' % self.request.store.slug,
 			'shop/catalog/product-detail.html',
 		]
 
@@ -266,7 +269,7 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 		if renderer_context['request'].accepted_renderer.format == 'html':
 			# append a python object product
 			renderer_context.update(
-				python_product=self.get_object(),
+				product_object=self.get_object(),  # used to crop thumbnail
 			)
 		return renderer_context
 
@@ -279,6 +282,6 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 				self.lookup_field: self.kwargs[self.lookup_url_kwarg],
 			}
 			queryset = self.product_model.objects.filter(
-				self.limit_choices_to, **filter_kwargs).select_related('store')
+				self.limit_choices_to, **filter_kwargs)
 			self._product = get_object_or_404(queryset)  # cache product locally
 		return self._product

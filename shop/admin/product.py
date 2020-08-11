@@ -1,6 +1,7 @@
 # external
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
+from easy_thumbnails.widgets import ImageClearableFileInput
 
 # internal
 from shop.models import Product, ProductImage
@@ -11,6 +12,14 @@ class ProductImageInline(admin.StackedInline):
     model = ProductImage
     extra = 1
     ordering = ['order']
+
+    def get_formset(self, request, obj=None, **kwargs):
+        """
+		Adds a thumbnail to the `image` field
+		"""
+        kwargs.update(widgets={'image': ImageClearableFileInput})
+        formset = super().get_formset(request, obj, **kwargs)
+        return formset
 
 
 # @admin.register(Product)  # registered in __init__.py

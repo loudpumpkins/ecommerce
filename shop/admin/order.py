@@ -30,7 +30,7 @@ class OrderPaymentInline(admin.TabularInline):
 		payment methods.
 		"""
 		choices = [pm.get_choice() for pm in
-				   cart_modifiers_pool.get_payment_modifiers(store=obj.order.store)]
+				   cart_modifiers_pool.get_payment_modifiers(obj.order.store)]
 		kwargs.update(widgets={'payment_method': widgets.Select(choices=choices)})
 		formset = super().get_formset(request, obj, **kwargs)
 		return formset

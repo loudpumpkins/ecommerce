@@ -2,12 +2,14 @@ from urllib.parse import urlparse
 
 # external
 from django.contrib.auth.models import AnonymousUser
+from django.core.files.storage import default_storage
 from django.db import models
 from django.http.request import HttpRequest
 
 # internal
 from customer.serializers import CustomerSerializer
 from shared.mailgun import send_mail
+from shared.util import get_filename_from_path
 from shop.models import Notification, Order
 from shop.serializers import (DeliverySerializer, OrderDetailSerializer,
 							  StoreSerializer)
@@ -77,6 +79,7 @@ def transition_change_notification(order):
 			pass
 		template = notification.mail_template
 		attachments = {}
-		for notiatt in notification.notificationattachment_set.all():
-			attachments[notiatt.attachment.original_filename] = notiatt.attachment.file.file
+		for notiatt in notification.attachments.all():
+			filename = get_filename_from_path(notiatt.attachment.name)
+			attachments[filename] = notiatt.attachment.file
 		send_mail(recipient, template=template, context=context, files=attachments)

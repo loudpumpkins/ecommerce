@@ -1,4 +1,12 @@
+import ntpath
+
+# external
 from django.utils.translation import gettext_lazy as _
+
+
+def get_filename_from_path(path):
+	head, tail = ntpath.split(path)
+	return tail or ntpath.basename(head)
 
 
 def get_client_ip(request):

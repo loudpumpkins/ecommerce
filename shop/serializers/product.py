@@ -1,3 +1,5 @@
+import logging
+
 # external
 from django.core import exceptions
 from django.core.cache import cache
@@ -7,7 +9,15 @@ from django.utils.safestring import mark_safe
 from rest_framework import serializers
 
 # internal
-from shop.models import Product
+from shop.models import Product, ProductImage
+
+logger = logging.getLogger(__name__)
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = ProductImage
+		exclude = ['id', 'order', 'product']
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -15,13 +25,15 @@ class ProductSerializer(serializers.ModelSerializer):
 	Common serializer for our product model.
 	"""
 	price = serializers.SerializerMethodField()
+	images = ProductImageSerializer(many=True)
 	product_type = serializers.CharField(read_only=True)
 	product_model = serializers.CharField(read_only=True)
 	product_url = serializers.URLField(source='get_absolute_url', read_only=True)
 
 	class Meta:
 		model = Product
-		fields = '__all__'
+		exclude = ['id', 'active', 'slug', 'unit_price', 'order', 'store',
+		           'created_at']
 
 	def __init__(self, *args, **kwargs):
 		kwargs.setdefault('label', 'catalog')
@@ -31,23 +43,32 @@ class ProductSerializer(serializers.ModelSerializer):
 		price = product.get_price(self.context['request'])
 		return '{:f}'.format(price)
 
+	def get_images(self, product):
+		images = product.images
+		return images
+
 	def render_html(self, product, postfix):
 		"""
-		Return a HTML snippet containing a rendered summary for the given
-		product. This HTML snippet typically contains a ``<figure>`` element with
-		a sample image ``<img src="..." >`` and a ``<figcaption>`` containing a
-		short description of the product.
+		Return a HTML snippet containing a thumbnailed sample image:
+		`<img src="..." >`
 
-		Build a template search path with `postfix` distinction.
+		Usage in subclassing class of ProductSerializer:
+			```
+			thumbnail = serializers.SerializerMethodField()
+
+			def get_thumbnail(self, product)
+				return self.render_html(product, 'thumbnail')
+			```
 		"""
 		if not self.label:
 			msg = "The Product Serializer must be configured using a `label` field."
 			raise exceptions.ImproperlyConfigured(msg)
 		request = self.context['request']
 		cache_key = 'product:{0}|{1}-{2}-{3}'.format(
-								product.id, self.label, product.slug, postfix)
+			product.id, self.label, postfix, request.accepted_renderer.format)
 		content = cache.get(cache_key)
 		if content:
+			logger.debug('Loading content from cache using key: [%s].', cache_key)
 			return mark_safe(content)
 		template = select_template([
 			'shop/products/{0}-{1}.html'.format(self.label, postfix),
@@ -56,10 +77,37 @@ class ProductSerializer(serializers.ModelSerializer):
 		# when rendering emails, we require an absolute URI, so that media can
 		# be accessed from the mail client
 		absolute_base_uri = request.build_absolute_uri('/').rstrip('/')
-		context = {'product': product, 'ABSOLUTE_BASE_URI': absolute_base_uri}
+		context = {
+			'image': product.sample_image,
+			'ABSOLUTE_BASE_URI': absolute_base_uri
+		}
+		if request.accepted_renderer.format in ['api', 'json', 'ajax']:
+			context['thumbnail_size'] = getattr(request.store,
+			                '{label}_thumbnail_size'.format(label=self.label))
+			logger.debug('Set thumbnail_size to: "%s".', context['thumbnail_size'])
+		logger.debug('Request came in as: "%s".', request.accepted_renderer.format)
 		content = strip_spaces_between_tags(template.render(context, request).strip())
 		cache.set(cache_key, content, 86400)  # 1 day cache
 		return mark_safe(content)
+
+
+class ProductSummarySerializer(ProductSerializer):
+	"""
+	Default serializer to create a summary from our Product model. This summary
+	then is used to render various list views, such as the catalog-, the cart-,
+	and the list of ordered items.
+	"""
+	images = None  # replace images with a thumbnail
+
+	thumbnail = serializers.SerializerMethodField(
+		help_text="Returns a rendered HTML snippet containing the cropped thumbnail.",
+	)
+
+	class Meta(ProductSerializer.Meta):
+		exclude = ['active', 'slug', 'unit_price', 'order', 'store', 'created_at']
+
+	def get_thumbnail(self, product):
+		return self.render_html(product, 'media')
 
 
 class ProductSelectSerializer(serializers.ModelSerializer):
@@ -79,29 +127,3 @@ class ProductSelectSerializer(serializers.ModelSerializer):
 
 	def get_text(self, instance):
 		return instance.product_name
-
-
-class ProductSummarySerializer(ProductSerializer):
-	"""
-	Default serializer to create a summary from our Product model. This summary
-	then is used to render various list views, such as the catalog-, the cart-,
-	and the list of ordered items.
-	"""
-	media = serializers.SerializerMethodField(
-		help_text="Returns a rendered HTML snippet containing a sample image "
-				  "among other elements",
-	)
-
-	caption = serializers.SerializerMethodField(
-		help_text="Returns the content from caption field if available",
-	)
-
-	class Meta(ProductSerializer.Meta):
-		fields = ['id', 'product_name', 'product_url', 'product_model', 'price',
-				  'media', 'caption']
-
-	def get_media(self, product):
-		return self.render_html(product, 'media')
-
-	def get_caption(self, product):
-		return getattr(product, 'caption', None)

@@ -1,3 +1,5 @@
+import logging
+
 # internal
 from customer.managers import VisitingCustomer
 from customer.models import Customer
@@ -5,6 +7,8 @@ from shop.models.cart import Cart
 from shop.models.store import Store
 from shop.serializers.cart import CartSerializer
 from shop.serializers.store import StoreSerializer
+
+logger = logging.getLogger(__name__)
 
 
 def add_customer(request):
@@ -43,8 +47,8 @@ def add_cart(request):
 		data['is_cart_filled'] = cart.items.exists()
 		cart_serializer = CartSerializer(cart, context=emulated_context, label='cart')
 		data['cart'] = cart_serializer.data
-	except (KeyError, Cart.DoesNotExist):
-		pass
+	except (KeyError, AttributeError, Cart.DoesNotExist) as e:
+		logger.warning('Not able to load `cart` into template context. (%s)' % e)
 	return data
 
 
