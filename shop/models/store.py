@@ -58,39 +58,46 @@ class Store(models.Model):
 		            "products for the customer."),
 	)
 
-	cart_thumbnail_size = models.CharField(
+	cart_thumbnail_options = models.CharField(
+		default="{'size':'160x160', 'crop': True, 'detail': True}",
 		max_length=255,
-		help_text=_(
-			"Thumbnail size of products in catalog list. eg: '488x488'.")
+		help_text=_("Used when viewing cart summary.")
 	)
 
-	catalog_thumbnail_size = models.CharField(
+	catalog_thumbnail_options = models.CharField(
+		default="{'size':'160x160', 'crop': True, 'detail': True}",
 		max_length=255,
-		help_text=_("Thumbnail size of products in catalog list. eg: '488x488'.")
+		help_text=_("Used when viewing list of all products.")
 	)
 
-	email_thumbnail_size = models.CharField(
+	email_thumbnail_options = models.CharField(
+		default="{'size':'120x120', 'crop': True, 'detail': True}",
 		max_length=255,
-		help_text=_(
-			"Thumbnail size of products in catalog list. eg: '488x488'.")
+		help_text=_("")
 	)
 
-	order_thumbnail_size = models.CharField(
+	order_thumbnail_options = models.CharField(
+		default="{'size':'120x120', 'crop': True, 'detail': True}",
 		max_length=255,
-		help_text=_(
-			"Thumbnail size of products in catalog list. eg: '488x488'.")
+		help_text=_("")
 	)
 
-	print_thumbnail_size = models.CharField(
+	print_thumbnail_options = models.CharField(
+		default="{'size':'320x320', 'crop': True, 'detail': True}",
 		max_length=255,
-		help_text=_(
-			"Thumbnail size of products in catalog list. eg: '488x488'.")
+		help_text=_("")
 	)
 
-	watch_thumbnail_size = models.CharField(
+	product_thumbnail_options = models.CharField(
+		default="{'size':'800x800', 'crop': True, 'detail': True}",
 		max_length=255,
-		help_text=_(
-			"Thumbnail size of products in catalog list. eg: '488x488'.")
+		help_text=_("Used when viewing a specific product - detail view.")
+	)
+
+	watch_thumbnail_options = models.CharField(
+		default="{'size':'160x160', 'crop': True, 'detail': True}",
+		max_length=255,
+		help_text=_("Used when viewing watch list summary.")
 	)
 
 	email = models.CharField(

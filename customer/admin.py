@@ -115,17 +115,17 @@ class CustomerAdmin(UserAdmin):
 	"""
 	form = CustomerChangeForm
 	add_form = CustomerCreationForm
-	list_display = ['get_username', 'last_name', 'first_name', 'recognized', 'last_access', 'is_unexpired']
-	list_filter = list(UserAdmin.list_filter) + [CustomerListFilter]
+	list_display = ['get_username', 'get_store', 'get_full_name', 'recognized', 'last_access', 'is_unexpired']
+	list_filter = list(UserAdmin.list_filter) + [CustomerListFilter, 'customer__store__domain']
 	segmentation_list_display = ['get_username']
-	readonly_fields = ['last_login', 'date_joined', 'last_access', 'recognized']
+	readonly_fields = ['get_store', 'last_login', 'date_joined', 'last_access', 'recognized']
 	ordering = ['id']
 	inlines = [CustomerInlineAdmin]
 
 	def get_fieldsets(self, request, obj=None):
 		fieldsets = list(super().get_fieldsets(request, obj=obj))
 		if obj:
-			fieldsets[0][1]['fields'] = ['username', 'recognized', 'password']
+			fieldsets[0][1]['fields'] = ['username', 'get_store', 'recognized', 'password']
 			fieldsets[3][1]['fields'] = ['date_joined', 'last_login', 'last_access']
 			if not obj.has_usable_password():
 				# Removes the 'Permissions' section if user is Guest (has no PW)
@@ -152,6 +152,10 @@ class CustomerAdmin(UserAdmin):
 			return customer_state
 		return user_state
 	recognized.short_description = _("State")
+
+	def get_store(self, user):
+		return user.customer.store
+	get_store.short_description = _("Store")
 
 	def last_access(self, user):
 		if hasattr(user, 'customer'):

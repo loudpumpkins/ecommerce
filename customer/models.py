@@ -1,12 +1,17 @@
 import string
 from importlib import import_module
 import warnings
+import logging
 
 # external
 from django.conf import settings
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, DEFAULT_DB_ALIAS
+from django.dispatch import receiver
 from django.template.loader import select_template
 from django.utils import timezone
+from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy as _
 
 # internal
@@ -15,6 +20,7 @@ from shared.fields import ChoiceEnumField, JSONField, CountryField
 
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore()
+logger = logging.getLogger(__name__)
 
 
 class Customer(models.Model):
@@ -33,11 +39,14 @@ class Customer(models.Model):
 		related_name='customer',
 	)
 
-	# store = models.ForeignKey(
-	# 	'shop.Store',
-	# 	on_delete=models.CASCADE,
-	# 	related_name='customers'
-	# )
+	store = models.ForeignKey(
+		'shop.Store',
+		on_delete=models.SET_DEFAULT,
+		related_name='customers',
+		default=None,
+		null=True,
+		blank=True,
+	)
 
 	number = models.PositiveIntegerField(
 		_("Customer Number"),
@@ -309,3 +318,33 @@ class BillingAddress(BaseAddress):
 	class Meta:
 		verbose_name = _("Billing Address")
 		verbose_name_plural = _("Billing Addresses")
+
+
+@receiver(user_logged_in)
+def handle_customer_login(sender, **kwargs):
+	"""
+	When the user is logged in, subsequent calls to request.customer will refer
+	to previous Customer (likely visitor customer). So we update request.customer
+	to an authenticated Customer upon login.
+	"""
+	try:
+		kwargs['request'].customer = kwargs['user'].customer
+		logger.info("New user [%s] logged in. Set new `Customer` to `request`."
+		            % kwargs['user'])
+	except (AttributeError, ObjectDoesNotExist) as e:
+		kwargs['request'].customer = SimpleLazyObject(
+			lambda: Customer.objects.get_from_request(kwargs['request']))
+		logger.warning("Was not able to set 'request.customer' for the new logged "
+		               "in user. (%s)." % e)
+
+
+@receiver(user_logged_out)
+def handle_customer_logout(sender, **kwargs):
+	"""
+	Update request.customer to a visiting Customer
+	"""
+	# defer assignment to anonymous customer, since the session_key is not yet
+	# rotated
+	kwargs['request'].customer = SimpleLazyObject(
+		lambda: Customer.objects.get_from_request(kwargs['request']))
+	logger.info("User logged out. Set `Customer` to `get_from_request(request)`.")

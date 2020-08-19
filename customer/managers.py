@@ -1,4 +1,5 @@
 import string
+import logging
 
 # external
 from django.contrib.auth import get_user_model
@@ -10,10 +11,19 @@ from django.utils.translation import gettext_lazy as _
 # internal
 from shared.fields import ChoiceEnum
 
+logger = logging.getLogger(__name__)
+
 
 class CustomerState(ChoiceEnum):
-	UNRECOGNIZED = 0, _("Unrecognized")
+	UNRECOGNIZED = 0, _("Unrecognized")  # user is_anonymous
+
 	GUEST = 1, _("Guest")
+	# [User]
+	# True: is_authenticated
+	# [Customer]
+	# True: is_recognized, is_guest, is_anonymous,
+	# False: is_authenticated, is_registered, is_visitor,
+
 	REGISTERED = 2, _("Registered")
 
 
@@ -124,7 +134,13 @@ class CustomerManager(models.Manager):
 
 	def get_from_request(self, request):
 		"""
-		Return an Customer object for the current User object.
+		Return the current request.User's Customer or VisitingCustomer object.
+
+		`Authenticated` users get their corresponding `Customer` object (or
+		creates it if none exists)
+
+		`Anonymous` users get a `VisitingCustomer` object [or] a session based
+		`Customer` object where the username is their encoded session_key
 		"""
 		if request.user.is_anonymous and request.session.session_key:
 			# the visitor is determined through the session key
@@ -133,18 +149,40 @@ class CustomerManager(models.Manager):
 			user = request.user
 		try:
 			if user.customer:
+				logger.debug('Customer object RETRIEVED for user: %s' % user)
 				return user.customer
 		except AttributeError:
 			pass
 		if request.user.is_authenticated:
 			customer, created = self.get_or_create(user=user)
 			if created:  # `user` has been created by another app than shop
-				customer.recognize_as_registered(request)
+				customer.recognize_as_registered(request, commit=False)
+				customer.store = request.store
+				customer.save()
+				logger.warning('An authenticated user [%s] had no linked `Customer` '
+				               'object. One was created.' % user)
+			else:
+				# todo: remove else statement after sufficient testing
+				logger.warning('This should never occur. Investigate.')
 		else:
 			customer = VisitingCustomer()
+			logger.debug('VisitingCustomer() object returned.')
 		return customer
 
 	def get_or_create_from_request(self, request):
+		"""
+		Returns the current request.User's Customer object.
+
+		Unlike `get_from_request()`, this method will convert `Anonymous` users
+		to a session_key based `Customer` object.
+
+		 `Authenticated` users get their corresponding `Customer` object (or
+		creates it if none exists) and sets state too REGISTERED.
+
+		`Anonymous` users get (or creates) a session based `Customer` object
+		where the username is their encoded session_key. If create, their state
+		is UNRECOGNIZED and is_active = False.
+		"""
 		if request.user.is_authenticated:
 			user = request.user
 			recognized = CustomerState.REGISTERED
@@ -154,16 +192,25 @@ class CustomerManager(models.Manager):
 				assert request.session.session_key
 			username = self.encode_session_key(request.session.session_key)
 			# create or get a previously created inactive intermediate user,
-			# which later can declare himself as guest, or register as a valid Django user
+			# which later can declare himself as guest, or register as a valid
+			# Django user
 			try:
 				user = get_user_model().objects.get(username=username)
+				logger.debug('User object RETRIEVED. [user=%s]' % user)
 			except get_user_model().DoesNotExist:
 				user = get_user_model().objects.create_user(username)
 				user.is_active = False
 				user.save()
+				logger.debug('User object CREATED. [user=%s]' % user)
 
 			recognized = CustomerState.UNRECOGNIZED
 		customer, created = self.get_or_create(user=user, recognized=recognized)
+		if created:
+			customer.store = request.store
+			customer.save()
+			logger.debug('Customer object CREATED for user: %s' % user)
+		else:
+			logger.debug('Customer object RETRIEVED for user: %s' % user)
 		return customer
 
 

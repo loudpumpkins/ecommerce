@@ -32,18 +32,31 @@ INTERNAL_IPS = ['127.0.0.1']  # for debug toolbar
 # Application definition
 
 INSTALLED_APPS = [
+
+	# main
 	'customer',
-	'easy_thumbnails',  # https://github.com/SmileyChris/easy-thumbnails
-	'easy_thumbnails.optimize',
 	'ecommerce',  # declared to load `custom commands`
 	'fsm',
 	'payment',
-	'rest_framework',
 	'shop',
+
+	# 3rd party
+	'allauth',
+	'allauth.account',
+	'allauth.socialaccount',
+	'easy_thumbnails',  # https://github.com/SmileyChris/easy-thumbnails
+	'easy_thumbnails.optimize',
+	'rest_framework',
+	'rest_framework.authtoken',
+	'dj_rest_auth',
+	'dj_rest_auth.registration',
+
+	# django
 	'django.contrib.admin',
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
 	'django.contrib.sessions',
+	'django.contrib.sites',
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'debug_toolbar',
@@ -186,12 +199,12 @@ LOGGING = {
 		},
 		'verbose': {
 			'format': '[%(asctime)s] %(name)s::%(funcName)s::line %(lineno)d - '
-			          '%(levelname)s - %(message)s'
+					  '%(levelname)s - %(message)s'
 		},
 		'colour': {
 			'()': 'ecommerce.settings.logger.DjangoColorsFormatter',  # colored output
 			'format': '[%(asctime)s] %(name)s::%(funcName)s::line %(lineno)d - '
-			          '%(levelname)s - %(message)s'
+					  '%(levelname)s - %(message)s'
 		}
 	},
 
@@ -204,31 +217,60 @@ LOGGING = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-# Absolute path to the directory that holds static files.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+# Absolute path to the directory that holds static files for collectstatic.
+# Example: "/home/path/to/app/static/"
+# STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+
+# Additional paths to look for static files.
+STATICFILES_DIRS = [
+	os.path.join(PROJECT_ROOT, 'static'),
+]
 
 # URL that handles the static files served from STATIC_ROOT.
-# Example: "http://media.lawrence.com/static/"
+# Example: "http://app.com/static/"
 STATIC_URL = '/static/'
 
 # Absolute path to the directory that holds media.
-# Example: "/home/media/media.lawrence.com/"
+# Example: "/home/path/to/app/media/"
 MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
+# Examples: "http://app.com/media/", "http://example.com/media/"
 MEDIA_URL = '/media/'
+
+################################################################################
+# REST FRAMEWORK / DJ REST AUTH / DJ ALL AUTH
+
+REST_FRAMEWORK = {
+	'DEFAULT_RENDERER_CLASSES': [
+		'shared.rest_renderers.JSONRenderer',
+		'rest_framework.renderers.BrowsableAPIRenderer',  # disable in production
+	],
+	# 'DEFAULT_FILTER_BACKENDS': [
+	# 	'django_filters.rest_framework.DjangoFilterBackend',
+	# ],
+	# 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+	# 'PAGE_SIZE': 16,
+}
+
+# https://dj-rest-auth.readthedocs.io/en/latest/configuration.html
+REST_AUTH_SERIALIZERS = {
+	# 'LOGIN_SERIALIZER': 'customer.serializers.LoginSerializer',
+}
+
+# https://django-allauth.readthedocs.io/en/latest/configuration.html
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # 'none', 'option', 'mandatory'
 
 ################################################################################
 # GENERAL
 
 MASTER_EMAIL = 'admin@watermelonsalad.com'
-MAX_PURCHASE_QUANTITY = 99  # used in shop.managers.Availability
+MAX_PURCHASE_QUANTITY = 50  # prevents a user from reserving entire stock
 USE_THOUSAND_SEPARATOR = True
 DEFAULT_CURRENCY = 'USD'  # only used if no currency is provided to field
 DEFAULT_TAX_RATE = 13  # tax rate as an int
+GUEST_IS_ACTIVE_USER = True  # New registered Guest accounts is_active = (bool)
 
 """
 When rendering an amount of type Money, use this format.
@@ -324,4 +366,14 @@ THUMBNAIL_ALIASES = {
 			'size': (400, 400), 'background': 'white', 'detail': True,
 		},
 	},
+}
+
+DEFAULT_THUMBNAIL_OPTIONS = {
+	'cart':     {'crop': True, 'detail': True, 'size': (160, 160)},
+	'catalog':  {'crop': True, 'detail': True, 'size': (160, 160)},
+	'email':    {'crop': True, 'detail': True, 'size': (120, 120)},
+	'order':    {'crop': True, 'detail': True, 'size': (120, 120)},
+	'print':    {'crop': True, 'detail': True, 'size': (320, 320)},
+	'product':  {'crop': True, 'detail': True, 'size': (120, 120)},
+	'watch':    {'crop': True, 'detail': True, 'size': (160, 160)},
 }

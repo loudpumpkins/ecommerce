@@ -24,8 +24,13 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/', include('customer.urls')),
     path('shop/', include('shop.urls')),
 ]
+
+# urlpatterns += [
+#     path('dj-rest-auth/', include('dj_rest_auth.urls'))
+# ]
 
 urlpatterns.extend(
     static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT))

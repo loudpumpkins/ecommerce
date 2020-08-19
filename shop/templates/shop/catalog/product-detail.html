@@ -16,13 +16,18 @@
 {% block content %}
 
       <div>
-        <h1>{{ product.product_name }} | {{ product.product_code }}</h1>
-        {% for image in product_object.images %}
-          {% thumbnail image 160x160 crop %}
-          <img width="{{ image.width }}" height="{{ image.height }}" src="{{ image.url }}" />
+        <h1>{{ product.product_name }} [{{ product.product_code }}]</h1>
+        {% for image in product.images %}
+          <div> size: {{ image.size|safe }}
+            <img src="{{ image.url }}" width="{{ image.width|safe }}" height="{{ image.height|safe }}" />
+          </div>
         {% endfor %}
         <p>{{ product.description }}</p>
         <span>Price: {{ product.price }}</span>
+        <form action="{% url "shop:add-to-cart" product.slug %}" method="post">
+          {% csrf_token %}
+          <button type="submit">Add to cart</button>
+        </form>
       </div>
 
 {% endblock %}

@@ -25,27 +25,41 @@ class StoreAdmin(admin.ModelAdmin):
 			],
 		}),
 		(_("Vendor"), {
-			'fields': [('vendor_name', 'vendor_email'),
-			           'vendor_extra',
-			           ],
+			'fields': [
+				('vendor_name', 'vendor_email'),
+				'vendor_extra',
+			],
 		}),
 		(_("Meta Data"), {
-			'fields': [('email', 'address'),
-						'meta_title',
-						'meta_description',
-						'meta_keywords'
+			'fields': [
+				('email', 'address'),
+				'meta_title',
+				'meta_description',
+				'meta_keywords'
+			],
+		}),
+		(_("Thumbnail options"), {
+			'description': "easy_thumbnail options as a string dictionary.<br> "
+			               "Or set to 'None' (or leave blank) to use original image.",
+			'fields': [
+				'cart_thumbnail_options',
+				'catalog_thumbnail_options',
+				'email_thumbnail_options',
+				'order_thumbnail_options',
+				'print_thumbnail_options',
+				'product_thumbnail_options',
+				'watch_thumbnail_options',
 			],
 		}),
 		(_("Analytics"), {
 			'fields': [
 				'google_analytics',
 				'facebook_analytics',
-				'addthis_analytics'],
+				'addthis_analytics'
+			],
 		}),
 		(_("Modifiers"), {
-			'fields': [
-				'cart_modifiers',
-			],
+			'fields': ['cart_modifiers',],
 		}),
 		(_("Dates"), {
 			'fields': ['created_at', 'updated_at'],

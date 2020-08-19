@@ -1,10 +1,26 @@
 <figure>
-	<a href="{{ product.product_url }}">
-		<h5>Name: {{ product.product_name }}</h5>
-		<div>Thumbnail: {{ product.thumbnail }}</div>
-	</a>
+
+  <h5>
+    <a href="{{ product.product_url }}">
+      Name: {{ product.product_name }}
+    </a>
+  </h5>
+
+  <div>
+    <div class="media">
+      <a href="{{ product.product_url }}">
+        <img
+            width="{{ product.thumbnail.width|safe }}"
+            height="{{ product.thumbnail.height|safe }}"
+            src="{{ product.thumbnail.url }}"
+        />
+      </a>
+    </div>
+  </div>
+
 	<figcaption>
 		<div>Price: <strong>{{ product.price }}</strong></div>
 		<div>Caption: {{ product.caption }}</div>
 	</figcaption>
+
 </figure>

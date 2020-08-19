@@ -1,10 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+Navbar:
+<ul>
+	<li>
+		<a href="{% url 'shop:product-list' %}">All products</a>
+	</li>
+  {% if customer.is_authenticated %}
+    <li>
+      <form class="ajax-post-logout" action="{% url 'customer:logout-api' %}">{% csrf_token %}
+        <button type="submit">Logout | {{ customer.recognized }}</button>
+      </form>
+    </li>
+    <li>
+      <a href="{% url 'customer:password-change' %}">Change password</a>
+    </li>
+  {% else %}
+    <li>
+      <form class="ajax-post-login" action="{% url 'customer:login-api' %}">{% csrf_token %}
+        <label for="username">E-Mail</label>
+        <input type="text" placeholder="E-Mail" name="username" required>
+        <label for="password">Password</label>
+        <input type="password" placeholder="Password" name="password" required>
+        <button type="submit">Login | {{ customer.recognized }}</button>
+      </form>
+    </li>
+  {% endif %}
+	<li>
+		<a href="{% url 'customer:register' %}">
+			Register as USER
+		</a>
+	</li>
+	<li>
+		<form class="ajax-post-guest" action="{% url 'customer:register-guest-api' %}">{% csrf_token %}
+      <button type="submit">Register as GUEST</button>
+    </form>
+	</li>
+</ul>
+<hr>

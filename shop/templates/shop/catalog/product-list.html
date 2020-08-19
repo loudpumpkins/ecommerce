@@ -17,11 +17,10 @@
 
   <div>
     <h1>All products</h1>
+
     {% for product in products.results %}
       <div>
-      start
         {% include "shop/catalog/product-figure.html" %}
-      end
       </div>
     {% empty %}
       <div>No products</div>

@@ -103,7 +103,31 @@ class ProductListPagination(pagination.LimitOffsetPagination):
 
 class AddToCartView(views.APIView):
 	"""
-	Handle the "Add to Cart" dialog on the products detail page.
+	Handle the "Add to Cart" DIALOG on the products detail page.
+
+	POST and GET are essentially the same, except that GET assumes a quantity of
+	1 and POST requires user to send the requested quantity.
+
+	Will responded with the min(requested, available, allowed) quantity, subtotal,
+	availability details and more minor details.
+
+	:return exp
+	{
+		'quantity': 2,
+		'unit_price': '€ 509.00',
+		'product': 4,
+		'product_code': 'sh-hd630vb',
+		'extra': {},
+		'is_in_cart': False,
+		'availability': {
+			'earliest': '0001-01-01T00:00:00Z',
+			'latest': '9999-12-31T23:59:59.999999Z',
+			'quantity': 5,
+			'sell_short': False,
+			'limited_offer': False
+		},
+		'subtotal': '€ 1,018.00'
+	}
 	"""
 	renderer_classes = (JSONRenderer, BrowsableAPIRenderer)
 	product_model = Product
@@ -177,10 +201,10 @@ class ProductListView(generics.ListAPIView):
 	context_data_name = 'products'
 
 	def get(self, request, *args, **kwargs):
-		# if self.get_queryset().count() == 1:
-		# 	# if store has only one product, redirect to that product
-		# 	redirect_to = self.get_queryset().first().get_absolute_url()
-		# 	return HttpResponseRedirect(redirect_to)
+		if self.get_queryset().count() == 1:
+			# if store has only one product, redirect to that product
+			redirect_to = self.get_queryset().first().get_absolute_url()
+			return HttpResponseRedirect(redirect_to)
 
 		response = self.list(request, *args, **kwargs)
 		# TODO: find a better way to invalidate the cache.
@@ -261,17 +285,6 @@ class ProductRetrieveView(generics.RetrieveAPIView):
 			'shop/catalog/product-detail-%s.html' % self.request.store.slug,
 			'shop/catalog/product-detail.html',
 		]
-
-	def get_renderer_context(self):
-		# used in `HTMLRenderer` to append all none 'view', 'args', 'kwargs'
-		# and 'request' to the template context
-		renderer_context = super().get_renderer_context()
-		if renderer_context['request'].accepted_renderer.format == 'html':
-			# append a python object product
-			renderer_context.update(
-				product_object=self.get_object(),  # used to crop thumbnail
-			)
-		return renderer_context
 
 	def get_object(self):
 		if not hasattr(self, '_product'):

@@ -9,7 +9,8 @@ from shop.modifier import cart_modifiers_pool
 class CartManager(models.Manager):
 	def get_from_request(self, request):
 		"""
-		Return the cart for current customer.
+		Efficiently returns the current Customer's `Cart`.
+		A new `Cart` is created if none is found.
 		"""
 		if request.customer.is_visitor:
 			raise self.model.DoesNotExist("Cart for visiting customer does not exist.")
@@ -19,6 +20,11 @@ class CartManager(models.Manager):
 		return request._cached_cart
 
 	def get_or_create_from_request(self, request):
+		"""
+		Efficiently returns the current Customer's cart.
+		If the customer is a visitor, we create a new `Customer` and `Cart` before
+		returning the newly created `Cart`.
+		"""
 		has_cached_cart = hasattr(request, '_cached_cart')
 		if request.customer.is_visitor:
 			request.customer = Customer.objects.get_or_create_from_request(request)
@@ -72,6 +78,6 @@ class CartItemManager(models.Manager):
 		result set according to the defined modifiers.
 		"""
 		watch_items = self.filter(cart=cart, quantity=0)
-		for modifier in cart_modifiers_pool.get_all_modifiers():
+		for modifier in cart_modifiers_pool.get_all_modifiers(request.store):
 			watch_items = modifier.arrange_watch_items(watch_items, request)
 		return watch_items

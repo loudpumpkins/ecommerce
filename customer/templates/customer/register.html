@@ -1,10 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "shop/base.html" %}
+
+{% block content %}
+
+  <!-- Signup form -->
+  <form class="ajax-post" id="signup" action="{% url 'customer:register-api' %}">{% csrf_token %}
+
+    <label for="email">Email</label>
+    <input name="email" type="text" id="email" placeholder="Email">
+
+    <label for="password1" class="col-sm-2 control-label">Password</label>
+    <input name="password1" type="password" id="password1" placeholder="Password">
+
+    <label for="password2">Repeat password</label>
+    <input name="password2" type="password" id="password2" placeholder="Repeat password">
+
+    <button type="submit">Sign up</button>
+
+  </form>
+
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

@@ -1,24 +1,36 @@
 # external
 from django.urls import path
-from dj_rest_auth.views import LogoutView
+from django.views.generic import TemplateView
+from dj_rest_auth.views import LogoutView, PasswordChangeView
+from dj_rest_auth.registration.views import RegisterView
 
 # internal
-# from customer.forms import RegisterUserForm, ContinueAsGuestForm
-from customer.views import LoginView, PasswordChangeView
+from customer.views import LoginView
+from customer.serializers import RegisterSerializer, GuestSerializer
 
 app_name = 'customer'
 urlpatterns = [
-	path('login/', LoginView.as_view(),
-		name='login'),
-	# path('register/', AuthFormsView.as_view(form_class=RegisterUserForm),
-	# 	name='register-user'),
-	# path('continue/', AuthFormsView.as_view(form_class=ContinueAsGuestForm),
-	# 	name='continue-as-guest'),
-
-	path('logout/', LogoutView.as_view(),
-		name='logout'),
-	path('password/change/', PasswordChangeView.as_view(),
+	# Views - w/ templates
+	path('password/change/', TemplateView.as_view(
+		template_name='customer/password_change.html'),
 		name='password-change'),
+	path('register/', TemplateView.as_view(
+		template_name='customer/register.html'),
+	     name='register'),
+
+	# API - Post Endpoints (no token)
+	path('api/login/', LoginView.as_view(),
+		name='login-api'),
+	path('api/register/', RegisterView.as_view(serializer_class=RegisterSerializer),
+		name='register-api'),
+	path('api/regis-guest/', RegisterView.as_view(serializer_class=GuestSerializer),
+		name='register-guest-api'),
+
+	# API - Post Endpoints (need token)
+	path('api/logout/', LogoutView.as_view(),
+		name='logout-api'),
+	path('api/password/change/', PasswordChangeView.as_view(),
+		name='password-change-api'),
 	# path('password/reset/', PasswordResetRequestView.as_view(),
 	# 	name='password-reset-request'),
 ]
