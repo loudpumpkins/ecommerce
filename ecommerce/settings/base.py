@@ -262,6 +262,9 @@ REST_AUTH_SERIALIZERS = {
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # 'none', 'option', 'mandatory'
 
+# django allauth
+ADAPTER = 'customer.adapter.ShopAccountAdapter'
+
 ################################################################################
 # GENERAL
 
@@ -270,7 +273,9 @@ MAX_PURCHASE_QUANTITY = 50  # prevents a user from reserving entire stock
 USE_THOUSAND_SEPARATOR = True
 DEFAULT_CURRENCY = 'USD'  # only used if no currency is provided to field
 DEFAULT_TAX_RATE = 13  # tax rate as an int
-GUEST_IS_ACTIVE_USER = True  # New registered Guest accounts is_active = (bool)
+
+# inactive guest accounts allows for easy transition from logged out to logged in
+GUEST_IS_ACTIVE_USER = False  # New registered Guest accounts is_active = (bool)
 
 """
 When rendering an amount of type Money, use this format.

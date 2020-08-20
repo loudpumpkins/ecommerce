@@ -21,10 +21,13 @@ shop/migrations/*
 !shop/migrations/__init__.py
 
 
-# static / media
+#@ static / media
 
 media/*
+!media/.gitkeep
+
 static/*
+!static/.gitkeep
 
 
 ## Django stuff
