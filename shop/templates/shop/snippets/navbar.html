@@ -3,7 +3,6 @@ Navbar:
 	<li>
 		<a href="{% url 'shop:product-list' %}">All products</a>
 	</li>
-  {% if customer.is_authenticated %}
     <li>
       <form class="ajax-post-logout" action="{% url 'customer:logout-api' %}">{% csrf_token %}
         <button type="submit">Logout | {{ customer.recognized }}</button>
@@ -12,17 +11,18 @@ Navbar:
     <li>
       <a href="{% url 'customer:password-change' %}">Change password</a>
     </li>
-  {% else %}
     <li>
       <form class="ajax-post-login" action="{% url 'customer:login-api' %}">{% csrf_token %}
-        <label for="username">E-Mail</label>
+        <label>E-Mail</label>
         <input type="text" placeholder="E-Mail" name="username" required>
-        <label for="password">Password</label>
+        <label>Password</label>
         <input type="password" placeholder="Password" name="password" required>
         <button type="submit">Login | {{ customer.recognized }}</button>
       </form>
     </li>
-  {% endif %}
+    <li>
+        <a href="{% url 'customer:fb_login' %}">Facebook Login</a>
+    </li>
 	<li>
 		<a href="{% url 'customer:register' %}">
 			Register as USER

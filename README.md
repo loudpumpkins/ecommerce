@@ -15,6 +15,13 @@ admin credentials :: *admin:secret*
 * setup gmail SMTP  
 
 
+#### Facebook Social Login
+
+* https://developers.facebook.com/ -> *login to alexei_panov@hotmail.com*  
+* *my apps* -> *ecommerce*
+* *settings* -> *basic*
+* in *app domains* add *[http(s)://domain.com]*
+
 #### React Mobile
 
 ## python manage.py *[commands]*

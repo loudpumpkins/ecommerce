@@ -329,7 +329,7 @@ def handle_customer_login(sender, **kwargs):
 	"""
 	try:
 		kwargs['request'].customer = kwargs['user'].customer
-		logger.info("New user [%s] logged in. Set new `Customer` to `request`."
+		logger.debug("New user [%s] logged in. Set new `Customer` to `request`."
 		            % kwargs['user'])
 	except (AttributeError, ObjectDoesNotExist) as e:
 		kwargs['request'].customer = SimpleLazyObject(
@@ -347,4 +347,4 @@ def handle_customer_logout(sender, **kwargs):
 	# rotated
 	kwargs['request'].customer = SimpleLazyObject(
 		lambda: Customer.objects.get_from_request(kwargs['request']))
-	logger.info("User logged out. Set `Customer` to `get_from_request(request)`.")
+	logger.debug("User logged out. Set `Customer` to `get_from_request(request)`.")

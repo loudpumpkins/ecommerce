@@ -5,7 +5,7 @@ from dj_rest_auth.views import LogoutView, PasswordChangeView
 from dj_rest_auth.registration.views import RegisterView
 
 # internal
-from customer.views import LoginView
+from customer.views import LoginView, FacebookLogin
 from customer.serializers import RegisterSerializer, GuestSerializer
 
 app_name = 'customer'
@@ -17,6 +17,9 @@ urlpatterns = [
 	path('register/', TemplateView.as_view(
 		template_name='customer/register.html'),
 	     name='register'),
+
+	# Views - Social Login
+	path('facebook/', FacebookLogin.as_view(), name='fb_login'),
 
 	# API - Post Endpoints (no token)
 	path('api/login/', LoginView.as_view(),

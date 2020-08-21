@@ -6,6 +6,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.exceptions import ErrorDetail, ValidationError
@@ -16,36 +17,15 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from dj_rest_auth.views import LoginView as OriginalLoginView
 from dj_rest_auth.views import PasswordChangeView as OriginalPasswordChangeView
+from dj_rest_auth.registration.views import SocialLoginView
 
 # internal
 from customer.models import Customer
 from shop.models import Cart
 
 
-class AuthFormsView(GenericAPIView):
-	"""
-	Generic view to handle authentication related forms such as user registration
-	"""
-	serializer_class = None
-	form_class = None
-
-	def post(self, request, *args, **kwargs):
-		if request.customer.is_visitor:
-			customer = Customer.objects.get_or_create_from_request(request)
-		else:
-			customer = request.customer
-		form_data = request.data.get(self.form_class.scope_prefix, {})
-		form = self.form_class(data=form_data, instance=customer)
-		if form.is_valid():
-			form.save(request=request)
-			response_data = {form.form_name: {
-				'success_message': _("Successfully registered yourself."),
-			}}
-			return Response(response_data, status=status.HTTP_200_OK)
-		errors = dict(form.errors)
-		if 'email' in errors:
-			errors.update({NON_FIELD_ERRORS: errors.pop('email')})
-		return Response({form.form_name: errors}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+class FacebookLogin(SocialLoginView):
+	adapter_class = FacebookOAuth2Adapter
 
 
 class LoginView(OriginalLoginView):

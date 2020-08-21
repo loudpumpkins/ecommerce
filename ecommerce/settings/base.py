@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ['127.0.0.1']  # for debug toolbar
+SITE_ID = 1
 
 # Application definition
 
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
 	'allauth',
 	'allauth.account',
 	'allauth.socialaccount',
+	'allauth.socialaccount.providers.facebook',
+	'allauth.socialaccount.providers.instagram',
 	'easy_thumbnails',  # https://github.com/SmileyChris/easy-thumbnails
 	'easy_thumbnails.optimize',
 	'rest_framework',
@@ -154,6 +157,11 @@ LOGGING = {
 	'version': 1,
 	'disable_existing_loggers': True,
 	'loggers': {
+		'customer': {
+			'handlers': ['developer-console'],
+			'level': 'DEBUG',
+			'propagate': False,
+		},
 		'shop': {
 			'handlers': ['developer-console'],
 			'level': 'DEBUG',
@@ -261,9 +269,7 @@ REST_AUTH_SERIALIZERS = {
 
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # 'none', 'option', 'mandatory'
-
-# django allauth
-ADAPTER = 'customer.adapter.ShopAccountAdapter'
+ACCOUNT_ADAPTER = 'customer.adapter.ShopAccountAdapter'
 
 ################################################################################
 # GENERAL
@@ -275,6 +281,7 @@ DEFAULT_CURRENCY = 'USD'  # only used if no currency is provided to field
 DEFAULT_TAX_RATE = 13  # tax rate as an int
 
 # inactive guest accounts allows for easy transition from logged out to logged in
+# inactive is_authenticated = False, but active users is_authenticated = True
 GUEST_IS_ACTIVE_USER = False  # New registered Guest accounts is_active = (bool)
 
 """

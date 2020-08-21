@@ -15,16 +15,42 @@ logger = logging.getLogger(__name__)
 
 
 class CustomerState(ChoiceEnum):
-	UNRECOGNIZED = 0, _("Unrecognized")  # user is_anonymous
+	UNRECOGNIZED = 0, _("Unrecognized")
+	# Customer
+	# True: is_anonymous, is_visitor,
+	# False: is_authenticated, is_registered, is_recognized, is_guest,
+	#
+	# User
+	# True: is_anonymous,
+	# False: is_authenticated, is_registered, is_recognized, is_guest, is_visitor,
 
 	GUEST = 1, _("Guest")
-	# [User]
-	# True: is_authenticated
-	# [Customer]
+	# [IF GUEST IS ACTIVE]
+	# Customer
 	# True: is_recognized, is_guest, is_anonymous,
 	# False: is_authenticated, is_registered, is_visitor,
+	#
+	# User
+	# True: is_authenticated
+	# False: is_anonymous, is_registered, is_recognized, is_guest, is_visitor,
+	#
+	# [IF GUEST IS INACTIVE]
+	# Customer
+	# True: is_recognized, is_guest, is_anonymous,
+	# False: is_authenticated, is_registered, is_visitor,
+	#
+	# User
+	# True: is_anonymous,
+	# False: is_authenticated, is_registered, is_recognized, is_guest, is_visitor,
 
 	REGISTERED = 2, _("Registered")
+	# Customer
+	# True: is_authenticated, is_registered, is_recognized,
+	# False: is_guest, is_anonymous, is_visitor,
+	#
+	# User
+	# True: is_authenticated,
+	# False: is_registered, is_recognized, is_guest, is_anonymous, is_visitor,
 
 
 class CustomerQuerySet(models.QuerySet):

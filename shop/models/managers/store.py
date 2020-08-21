@@ -31,8 +31,9 @@ class StoreManager(models.Manager):
 				if domain not in STORE_CACHE:
 					STORE_CACHE[domain] = self.get(domain__iexact=domain)
 				return STORE_CACHE[domain]
-			except self.model.DoesNotExist:
-				logger.warning('Not able to load store into cache. (host = %s)' % host)
+			except self.model.DoesNotExist as e:
+				logger.critical('Not able to load store into cache. (host = %s, '
+								'exc = %s)' % (host, e))  # store mandatory
 				return None
 
 	def clear_cache(self):

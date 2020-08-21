@@ -48,7 +48,7 @@ def add_cart(request):
 		cart_serializer = CartSerializer(cart, context=emulated_context, label='cart')
 		data['cart'] = cart_serializer.data
 	except (KeyError, AttributeError, Cart.DoesNotExist) as e:
-		logger.warning('Not able to load `cart` into template context. (%s)' % e)
+		logger.debug('Not able to load `cart` into template context. (%s)' % e)
 	return data
 
 
