@@ -99,6 +99,14 @@ TEMPLATES = [
 	},
 ]
 
+AUTHENTICATION_BACKENDS = [
+	# Needed to login by username in Django admin, regardless of `allauth`
+	'django.contrib.auth.backends.ModelBackend',
+
+	# `allauth` specific authentication methods, such as login by e-mail
+	'allauth.account.auth_backends.AuthenticationBackend',
+]
+
 WSGI_APPLICATION = 'ecommerce.wsgi.application'
 
 
@@ -270,6 +278,11 @@ REST_AUTH_SERIALIZERS = {
 # https://django-allauth.readthedocs.io/en/latest/configuration.html
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # 'none', 'option', 'mandatory'
 ACCOUNT_ADAPTER = 'customer.adapter.ShopAccountAdapter'
+
+################################################################################
+# SOCIAL LOGINS
+
+FACEBOOK_APP_ID = '762414111184191'
 
 ################################################################################
 # GENERAL

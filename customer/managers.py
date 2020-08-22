@@ -175,7 +175,7 @@ class CustomerManager(models.Manager):
 			user = request.user
 		try:
 			if user.customer:
-				logger.debug('Customer object RETRIEVED for user: %s' % user)
+				logger.debug('Customer object RETRIEVED. [user=%s]' % user)
 				return user.customer
 		except AttributeError:
 			pass
@@ -185,7 +185,7 @@ class CustomerManager(models.Manager):
 				customer.recognize_as_registered(request, commit=False)
 				customer.store = request.store
 				customer.save()
-				logger.warning('An authenticated user [%s] had no linked `Customer` '
+				logger.debug('An authenticated user [%s] had no linked `Customer` '
 				               'object. One was created.' % user)
 			else:
 				# todo: remove else statement after sufficient testing
@@ -234,9 +234,9 @@ class CustomerManager(models.Manager):
 		if created:
 			customer.store = request.store
 			customer.save()
-			logger.debug('Customer object CREATED for user: %s' % user)
+			logger.debug('Customer object CREATED. [user=%s]' % user)
 		else:
-			logger.debug('Customer object RETRIEVED for user: %s' % user)
+			logger.debug('Customer object RETRIEVED. [user=%s]' % user)
 		return customer
 
 

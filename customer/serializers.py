@@ -1,6 +1,7 @@
 # external
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from dj_rest_auth.registration.serializers import \
 	(RegisterSerializer as OriginalRegisterSerializer)
 from rest_framework import serializers
@@ -57,7 +58,10 @@ class GuestSerializer(OriginalRegisterSerializer):
 	password2 = None
 
 	def validate(self, data):
-		# no validation is required
+		# only visitors can continue as Guests.
+		if not self.context['request']._request.customer.is_visitor:
+			raise serializers.ValidationError(_("Registered users don't have to "
+			                                    "register as guests."))
 		return data
 
 	def save(self, request):

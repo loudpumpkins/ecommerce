@@ -334,8 +334,8 @@ def handle_customer_login(sender, **kwargs):
 	except (AttributeError, ObjectDoesNotExist) as e:
 		kwargs['request'].customer = SimpleLazyObject(
 			lambda: Customer.objects.get_from_request(kwargs['request']))
-		logger.warning("Was not able to set 'request.customer' for the new logged "
-		               "in user. (%s)." % e)
+		logger.debug("Was not able to set 'request.customer' for the new logged "
+		               "in user. (%s)" % e)
 
 
 @receiver(user_logged_out)

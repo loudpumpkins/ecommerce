@@ -24,10 +24,6 @@ from customer.models import Customer
 from shop.models import Cart
 
 
-class FacebookLogin(SocialLoginView):
-	adapter_class = FacebookOAuth2Adapter
-
-
 class LoginView(OriginalLoginView):
 	"""
 	Login as the given user, and merge the items from the current with the new
@@ -67,6 +63,10 @@ class LoginView(OriginalLoginView):
 		response = self.handle_exception(exc)
 		self.response = self.finalize_response(request, response, *args, **kwargs)
 		return self.response
+
+
+class FacebookLogin(SocialLoginView):
+	adapter_class = FacebookOAuth2Adapter
 
 
 # class PasswordResetRequestView(GenericAPIView):

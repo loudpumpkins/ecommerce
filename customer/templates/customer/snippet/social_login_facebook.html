@@ -1,0 +1,24 @@
+{% load static %}
+<script id="allauth-facebook-settings" type="application/json">
+{
+  "appId": "762414111184191",
+  "version": "v8.0",
+  "initParams": {
+    "appId": "762414111184191",
+    "version": "v8.0"
+  },
+  "loginOptions": {
+    "scope": "email"
+   },
+   "nextUrl": "{{ request.get_full_path }}",
+   "loginByTokenUrl": "http://{{ store.domain }}/accounts/facebook/login/token/",
+   "cancelUrl": "http://{{ store.domain }}/accounts/social/login/cancelled/",
+   "logoutUrl": "http://{{ store.domain }}/accounts/logout/",
+   "loginUrl": "http://{{ store.domain }}/accounts/facebook/login/",
+   "errorUrl": "http://{{ store.domain }}/accounts/social/login/error/",
+   "csrfToken": "{{ csrf_token }}"
+}
+</script>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+<script src="{% static "facebook.js" %}" type="text/javascript"></script>
+<a href="javascript:allauth.facebook.login">Login with JS Facebook</a>

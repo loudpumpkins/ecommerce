@@ -1,37 +1,48 @@
 Navbar:
 <ul>
+
 	<li>
 		<a href="{% url 'shop:product-list' %}">All products</a>
 	</li>
-    <li>
-      <form class="ajax-post-logout" action="{% url 'customer:logout-api' %}">{% csrf_token %}
-        <button type="submit">Logout | {{ customer.recognized }}</button>
-      </form>
-    </li>
-    <li>
-      <a href="{% url 'customer:password-change' %}">Change password</a>
-    </li>
-    <li>
-      <form class="ajax-post-login" action="{% url 'customer:login-api' %}">{% csrf_token %}
-        <label>E-Mail</label>
-        <input type="text" placeholder="E-Mail" name="username" required>
-        <label>Password</label>
-        <input type="password" placeholder="Password" name="password" required>
-        <button type="submit">Login | {{ customer.recognized }}</button>
-      </form>
-    </li>
-    <li>
-        <a href="{% url 'customer:fb_login' %}">Facebook Login</a>
-    </li>
+
+	<li>
+		<form class="ajax-post-logout" action="{% url 'customer:logout-api' %}">{% csrf_token %}
+			<button type="submit">Logout | {{ customer.recognized }}</button>
+		</form>
+	</li>
+
+	<li>
+		<a href="{% url 'customer:password-change' %}">Change password</a>
+	</li>
+
+	<li>
+		<form class="ajax-post-login" action="{% url 'customer:login-api' %}">{% csrf_token %}
+			<label>E-Mail</label>
+			<input type="text" placeholder="E-Mail" name="username" required>
+			<label>Password</label>
+			<input type="password" placeholder="Password" name="password" required>
+			<button type="submit">Login | {{ customer.recognized }}</button>
+		</form>
+	</li>
+
+	<li>
+{#		{% load socialaccount %}#}
+{#		{% providers_media_js %}#}
+{#		<a href="{% provider_login_url "facebook" method="js_sdk" %}">Login with Facebook</a>#}
+    {% include "customer/snippet/social_login_facebook.html" %}
+
+	</li>
+
 	<li>
 		<a href="{% url 'customer:register' %}">
 			Register as USER
 		</a>
 	</li>
+
 	<li>
 		<form class="ajax-post-guest" action="{% url 'customer:register-guest-api' %}">{% csrf_token %}
-      <button type="submit">Register as GUEST</button>
-    </form>
+			<button type="submit">Register as GUEST</button>
+		</form>
 	</li>
 </ul>
 <hr>
