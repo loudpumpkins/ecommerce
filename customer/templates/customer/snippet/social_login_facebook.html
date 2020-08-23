@@ -8,10 +8,10 @@
     "version": "v8.0"
   },
   "loginOptions": {
-    "scope": "email"
+    "scope": "email,public_profile"
    },
    "nextUrl": "{{ request.get_full_path }}",
-   "loginByTokenUrl": "http://{{ store.domain }}/accounts/facebook/login/token/",
+   "loginByTokenUrl": "{% url 'customer:fb_login' %}",
    "cancelUrl": "http://{{ store.domain }}/accounts/social/login/cancelled/",
    "logoutUrl": "http://{{ store.domain }}/accounts/logout/",
    "loginUrl": "http://{{ store.domain }}/accounts/facebook/login/",
@@ -21,4 +21,4 @@
 </script>
 <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
 <script src="{% static "facebook.js" %}" type="text/javascript"></script>
-<a href="javascript:allauth.facebook.login">Login with JS Facebook</a>
+<a href="javascript:allauth.facebook.login%28%29">Login with JS Facebook</a>

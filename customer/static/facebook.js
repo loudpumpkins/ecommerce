@@ -4,12 +4,12 @@
 
   /* SUPPORT FUNCTIONS */
   function error_response(data, prefix){
-    document.getElementById('api-response').innerHTML("Response: " + data.status + ' ' + data.statusText + ', Action: ' + prefix + '<br/>Content: ' + data.responseText)
+    document.getElementById('api-response').innerHTML = "Response: " + data.status + ' ' + data.statusText + ', Action: ' + prefix + '<br/>Content: ' + data.responseText
     // $('.api-response').html("Response: " + data.status + ' ' + data.statusText + ', Action: ' + prefix + '<br/>Content: ' + data.responseText);
   }
 
   function success_response(data){
-    document.getElementById('api-response').innerHTML("Response: OK<br/>Content: " + JSON.stringify(data))
+    document.getElementById('api-response').innerHTML = "Response: OK<br/>Content: " + JSON.stringify(data)
     // $('.api-response').html("Response: OK<br/>Content: " + JSON.stringify(data));
   }
 
@@ -89,6 +89,7 @@
       window.fbAsyncInit = function () {
         // window.fbAsyncInit is called as soon as SDK loads
         // call FB.init()
+        console.log('ready')
         FB.init(opts.initParams)
         fbInitialized = true
         allauth.facebook.onInit()
@@ -114,7 +115,7 @@
 
       FB.login(function (response) {
         if (response.authResponse) {
-          self.onLoginSuccess(response, nextUrl, process)
+          self.onLoginSuccess(response, nextUrl)
         } else if (response && response.status && ['not_authorized', 'unknown'].indexOf(response.status) > -1) {
           self.onLoginCanceled(response)
         } else {

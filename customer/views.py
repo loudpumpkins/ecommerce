@@ -6,6 +6,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 
+from allauth.account.adapter import get_adapter
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from rest_framework import status
 from rest_framework.views import APIView
@@ -15,10 +16,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.views import LoginView as OriginalLoginView
 from dj_rest_auth.views import PasswordChangeView as OriginalPasswordChangeView
-from dj_rest_auth.registration.views import SocialLoginView
-
 # internal
 from customer.models import Customer
 from shop.models import Cart
@@ -65,9 +65,41 @@ class LoginView(OriginalLoginView):
 		return self.response
 
 
-class FacebookLogin(SocialLoginView):
-	adapter_class = FacebookOAuth2Adapter
+class SocialLoginView(LoginView):
+	"""
+	from dj_rest_auth.registration.views import SocialLoginView
+	Essentially `SocialLoginView` from `dj_rest_auth`, but needs inherit's
+	new `LoginView` instead of the `OriginalLoginView`.
 
+	class used for social authentications
+	example usage for facebook with access_token
+	-------------
+	from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+
+	class FacebookLogin(SocialLoginView):
+		adapter_class = FacebookOAuth2Adapter
+	-------------
+
+	example usage for facebook with code
+
+	-------------
+	from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+	from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+
+	class FacebookLogin(SocialLoginView):
+		adapter_class = FacebookOAuth2Adapter
+		client_class = OAuth2Client
+		callback_url = 'localhost:8000'
+	-------------
+	"""
+	serializer_class = SocialLoginSerializer
+
+	def process_login(self):
+		get_adapter(self.request).login(self.request, self.user)
+
+
+class FacebookLoginView(SocialLoginView):
+	adapter_class = FacebookOAuth2Adapter
 
 # class PasswordResetRequestView(GenericAPIView):
 # 	"""

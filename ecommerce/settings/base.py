@@ -279,10 +279,36 @@ REST_AUTH_SERIALIZERS = {
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # 'none', 'option', 'mandatory'
 ACCOUNT_ADAPTER = 'customer.adapter.ShopAccountAdapter'
 
-################################################################################
-# SOCIAL LOGINS
-
-FACEBOOK_APP_ID = '762414111184191'
+SOCIALACCOUNT_PROVIDERS = {
+	# https://django-allauth.readthedocs.io/en/latest/providers.html#facebook
+	'facebook': {
+		# 'METHOD': 'oauth2',
+		# 'SDK_URL': '//connect.facebook.net/{locale}/sdk.js',
+		# 'SCOPE': ['email', 'public_profile'],
+		# 'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+		# 'INIT_PARAMS': {'cookie': True},
+		'FIELDS': [
+			'id',
+            'email',
+            'name',
+            'first_name',
+            'last_name',
+            'verified',
+            'locale',
+            'timezone',
+            'link',
+            'gender',
+            'updated_time'
+			'middle_name',
+			'name_format',
+			'picture',
+		],
+		# 'EXCHANGE_TOKEN': True,
+		# 'LOCALE_FUNC': 'path.to.callable',
+		# 'VERIFIED_EMAIL': False,
+		'VERSION': 'v8.0',
+	}
+}
 
 ################################################################################
 # GENERAL
