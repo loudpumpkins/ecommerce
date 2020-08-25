@@ -5,7 +5,7 @@ from dj_rest_auth.views import LogoutView, PasswordChangeView
 from dj_rest_auth.registration.views import RegisterView
 
 # internal
-from customer.views import LoginView, FacebookLogin
+from customer.views import LoginView, FacebookLoginView
 from customer.serializers import RegisterSerializer, GuestSerializer
 
 app_name = 'customer'
@@ -18,12 +18,11 @@ urlpatterns = [
 		template_name='customer/register.html'),
 	     name='register'),
 
-	# Views - Social Login
-	path('facebook/', FacebookLogin.as_view(), name='fb_login'),
-
 	# API - Post Endpoints (no token)
 	path('api/login/', LoginView.as_view(),
 		name='login-api'),
+	path('api/facebook/', FacebookLoginView.as_view(),
+		 name='fb-login-api'),
 	path('api/register/', RegisterView.as_view(serializer_class=RegisterSerializer),
 		name='register-api'),
 	path('api/regis-guest/', RegisterView.as_view(serializer_class=GuestSerializer),
@@ -37,3 +36,4 @@ urlpatterns = [
 	# path('password/reset/', PasswordResetRequestView.as_view(),
 	# 	name='password-reset-request'),
 ]
+

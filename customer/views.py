@@ -1,13 +1,4 @@
-# external
-from django.contrib.auth import logout, get_user_model
-from django.contrib.auth.models import AnonymousUser
-from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import NON_FIELD_ERRORS
-from django.utils.encoding import force_str
-from django.utils.translation import gettext_lazy as _
-
 from allauth.account.adapter import get_adapter
-from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.exceptions import ErrorDetail, ValidationError
@@ -19,7 +10,9 @@ from rest_framework.settings import api_settings
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from dj_rest_auth.views import LoginView as OriginalLoginView
 from dj_rest_auth.views import PasswordChangeView as OriginalPasswordChangeView
+
 # internal
+from customer.adapter import FacebookOAuth2Adapter
 from customer.models import Customer
 from shop.models import Cart
 
@@ -91,10 +84,14 @@ class SocialLoginView(LoginView):
 		client_class = OAuth2Client
 		callback_url = 'localhost:8000'
 	-------------
+	Basic flow:
+		1) in POST, checks basic form validity (token/code)
+		2) if form valid,
 	"""
 	serializer_class = SocialLoginSerializer
 
 	def process_login(self):
+		# this login will add allauth's auth backend
 		get_adapter(self.request).login(self.request, self.user)
 
 
