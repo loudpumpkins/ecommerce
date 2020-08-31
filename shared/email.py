@@ -11,6 +11,19 @@ from django.conf import settings
 from shop.models import Notification
 
 
+"""
+SEND EMAILS USING MAILGUN API - https://www.mailgun.com/homepage/
+
+DOCUMENTATION
+https://documentation.mailgun.com/en/latest/
+
+The entire app uses `send_mail()` method for all e-mail functionality. To 
+switch providers, simply re-define exactly: 
+	`send_mail(to, cc=None, bcc=None, sender=None, subject=None, text=None,
+			  html=None, template=None, context=None, files=None)`
+"""
+
+
 def format_sender(sender):
 	"""
 	Light email format. Turns 'name@example.com' -> 'Name <name@example.com>'

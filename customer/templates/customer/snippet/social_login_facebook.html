@@ -1,8 +1,6 @@
 {% load static %}
 <script id="allauth-facebook-settings" type="application/json">
 {
-  "appId": "762414111184191",
-  "version": "v8.0",
   "initParams": {
     "appId": "762414111184191",
     "version": "v8.0"
@@ -10,12 +8,8 @@
   "loginOptions": {
     "scope": "email,public_profile"
    },
-   "nextUrl": "{{ request.get_full_path }}",
    "loginByTokenUrl": "{% url 'customer:fb-login-api' %}",
-   "cancelUrl": "http://{{ store.domain }}/accounts/social/login/cancelled/",
    "logoutUrl": "http://{{ store.domain }}/accounts/logout/",
-   "loginUrl": "http://{{ store.domain }}/accounts/facebook/login/",
-   "errorUrl": "http://{{ store.domain }}/accounts/social/login/error/",
    "csrfToken": "{{ csrf_token }}"
 }
 </script>

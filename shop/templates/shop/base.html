@@ -22,37 +22,92 @@
 
 
 <body>
-  <b>Customer</b><br>
-  <b>True: </b>
-  {% if customer.is_authenticated %} is_authenticated, {% endif %}
-  {% if customer.is_registered %} is_registered, {% endif %}
-  {% if customer.is_recognized %} is_recognized, {% endif %}
-  {% if customer.is_guest %} is_guest, {% endif %}
-  {% if customer.is_anonymous %} is_anonymous, {% endif %}
-  {% if customer.is_visitor %} is_visitor, {% endif %} <br>
-  <b>False: </b>
-  {% if not customer.is_authenticated %} is_authenticated, {% endif %}
-  {% if not customer.is_registered %} is_registered, {% endif %}
-  {% if not customer.is_recognized %} is_recognized, {% endif %}
-  {% if not customer.is_guest %} is_guest, {% endif %}
-  {% if not customer.is_anonymous %} is_anonymous, {% endif %}
-  {% if not customer.is_visitor %} is_visitor, {% endif %}<br><br>
+  <table style="text-align: left; ">
+    <tr>
+      <th></th>
+      <th> | Customer</th>
+      <th> | User</th>
+    </tr>
+    <tr>
+      <td><b>True </b></td>
+      <td> |
+        {% if customer.is_authenticated %} is_authenticated, {% endif %}
+        {% if customer.is_registered %} is_registered, {% endif %}
+        {% if customer.is_social %} is_social, {% endif %}
+        {% if customer.is_recognized %} is_recognized, {% endif %}
+        {% if customer.is_guest %} is_guest, {% endif %}
+        {% if customer.is_anonymous %} is_anonymous, {% endif %}
+        {% if customer.is_visitor %} is_visitor, {% endif %}
+      </td>
+      <td> |
+        {% if user.is_authenticated %} is_authenticated, {% endif %}
+        {% if user.is_registered %} is_registered, {% endif %}
+        {% if user.is_social %} is_social, {% endif %}
+        {% if user.is_recognized %} is_recognized, {% endif %}
+        {% if user.is_guest %} is_guest, {% endif %}
+        {% if user.is_anonymous %} is_anonymous, {% endif %}
+        {% if user.is_visitor %} is_visitor, {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td><b>False </b></td>
+      <td> |
+        {% if not customer.is_authenticated %} is_authenticated, {% endif %}
+        {% if not customer.is_registered %} is_registered, {% endif %}
+        {% if not customer.is_social %} is_social, {% endif %}
+        {% if not customer.is_recognized %} is_recognized, {% endif %}
+        {% if not customer.is_guest %} is_guest, {% endif %}
+        {% if not customer.is_anonymous %} is_anonymous, {% endif %}
+        {% if not customer.is_visitor %} is_visitor, {% endif %}
+      </td>
+      <td> |
+        {% if not user.is_authenticated %} is_authenticated, {% endif %}
+{#        {% if not user.is_registered %} is_registered, {% endif %}#}
+{#        {% if not user.is_social %} is_social, {% endif %}#}
+{#        {% if not user.is_recognized %} is_recognized, {% endif %}#}
+{#        {% if not user.is_guest %} is_guest, {% endif %}#}
+        {% if not user.is_anonymous %} is_anonymous, {% endif %}
+{#        {% if not user.is_visitor %} is_visitor, {% endif %}#}
+      </td>
+    </tr>
+  </table>
 
-  <b>User</b><br>
-  <b>True: </b>
-  {% if user.is_authenticated %} is_authenticated, {% endif %}
-  {% if user.is_registered %} is_registered, {% endif %}
-  {% if user.is_recognized %} is_recognized, {% endif %}
-  {% if user.is_guest %} is_guest, {% endif %}
-  {% if user.is_anonymous %} is_anonymous, {% endif %}
-  {% if user.is_visitor %} is_visitor, {% endif %} <br>
-  <b>False: </b>
-  {% if not user.is_authenticated %} is_authenticated, {% endif %}
-  {% if not user.is_registered %} is_registered, {% endif %}
-  {% if not user.is_recognized %} is_recognized, {% endif %}
-  {% if not user.is_guest %} is_guest, {% endif %}
-  {% if not user.is_anonymous %} is_anonymous, {% endif %}
-  {% if not user.is_visitor %} is_visitor, {% endif %}<br><br>
+{#  <b>Customer</b><br>#}
+{#  <b>True: </b>#}
+{#  {% if customer.is_authenticated %} is_authenticated, {% endif %}#}
+{#  {% if customer.is_registered %} is_registered, {% endif %}#}
+{#  {% if customer.is_social %} is_social, {% endif %}#}
+{#  {% if customer.is_recognized %} is_recognized, {% endif %}#}
+{#  {% if customer.is_guest %} is_guest, {% endif %}#}
+{#  {% if customer.is_anonymous %} is_anonymous, {% endif %}#}
+{#  {% if customer.is_visitor %} is_visitor, {% endif %} <br>#}
+{#  <b>False: </b>#}
+{#  {% if not customer.is_authenticated %} is_authenticated, {% endif %}#}
+{#  {% if not customer.is_registered %} is_registered, {% endif %}#}
+{#  {% if not customer.is_social %} is_social, {% endif %}#}
+{#  {% if not customer.is_recognized %} is_recognized, {% endif %}#}
+{#  {% if not customer.is_guest %} is_guest, {% endif %}#}
+{#  {% if not customer.is_anonymous %} is_anonymous, {% endif %}#}
+{#  {% if not customer.is_visitor %} is_visitor, {% endif %}<br><br>#}
+{##}
+{#  <b>User</b><br>#}
+{#  <b>True: </b>#}
+{#  {% if user.is_authenticated %} is_authenticated, {% endif %}#}
+{#  {% if user.is_registered %} is_registered, {% endif %}#}
+{#  {% if user.is_social %} is_social, {% endif %}#}
+{#  {% if user.is_recognized %} is_recognized, {% endif %}#}
+{#  {% if user.is_guest %} is_guest, {% endif %}#}
+{#  {% if user.is_anonymous %} is_anonymous, {% endif %}#}
+{#  {% if user.is_visitor %} is_visitor, {% endif %} <br>#}
+{#  <b>False: </b>#}
+{#  {% if not user.is_authenticated %} is_authenticated, {% endif %}#}
+{#  {% if not user.is_registered %} is_registered, {% endif %}#}
+{#  {% if not user.is_social %} is_social, {% endif %}#}
+{#  {% if not user.is_recognized %} is_recognized, {% endif %}#}
+{#  {% if not user.is_guest %} is_guest, {% endif %}#}
+{#  {% if not user.is_anonymous %} is_anonymous, {% endif %}#}
+{#  {% if not user.is_visitor %} is_visitor, {% endif %}<br><br>#}
+
 
 	{% include "shop/snippets/navbar.html" %}
 	{% include "shop/snippets/messages.html" %}

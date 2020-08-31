@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 # internal
 from customer.serializers import CustomerSerializer
 from fsm import FSMAdminMixin
-from shared.transition import transition_change_notification
+from shared.notifications import transition_change_notification
 from shop.models.order import OrderItem, OrderPayment
 from shop.serializers.order import OrderDetailSerializer
 from shop.modifier import cart_modifiers_pool

@@ -53,6 +53,7 @@ class NotificationForm(models.ModelForm):
             elif isinstance(transition.target, RETURN_VALUE):
                 for target in transition.target.allowed_states:
                     choices[target] = Order.get_transition_name(target)
+        choices.update(Notification.extra_events())
         return choices.items()
 
     def get_recipient_choices(self):
@@ -89,11 +90,15 @@ class NotificationAdmin(admin.ModelAdmin):
     save_as = True
 
     def transition_name(self, obj):
-        return Order.get_transition_name(obj.transition_target)
+        choices = Notification.extra_events()
+        try:
+            return choices[obj.transition_target]
+        except KeyError:
+            return Order.get_transition_name(obj.transition_target)
     transition_name.short_description = _("Event")
 
     def num_attachments(self, obj):
-        return obj.notificationattachment_set.count()
+        return obj.attachments.count()
     num_attachments.short_description = _("Attachments")
 
     def get_recipient(self, obj):

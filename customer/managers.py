@@ -15,40 +15,83 @@ logger = logging.getLogger(__name__)
 
 
 class CustomerState(ChoiceEnum):
-	UNRECOGNIZED = 0, _("Unrecognized")
-	# Customer
+	"""
+	Note that user.is_authenticated is NOT effected by `CustomerState`.
+	So `user.is_authenticated` is not always == `customer.is_authenticated`.
+
+	`UNRECOGNIZED` users have no account and have a visitors cart. They have no
+	functionality other than adding items to cart.
+		- is_anonymous
+
+	`GUEST` users have a django account, but can use it to add items to cart and
+	checkout only. However, guest accounts are stored for historical purposes.
+		- is_anonymous
+		- is_guest
+		- is_recognized
+
+	`SOCIAL` users are active, registered users that logged in through a social
+	platform such as 'Login with facebook'. They can view order history,
+	login/logout, but they can not change passwords nor login through the
+	standard login flow. They must login though the same social platform.
+		- is_authenticated
+		- is_social
+		- is_recognized
+
+	`REGISTERED` users are standard django users that registered using the
+	standard registration form. They can view order history, change passwords,
+	login/logout, forget password,...
+		- is_authenticated
+		- is_registered
+		- is_recognized
+
+
+	Customers in ascending level of privileges:
+		`VISITOR` - Anonymous users with a VisitingCustomer - Has no user or cart
+		`UNRECOGNIZED` - UNRECOGNIZED - Can add items to cart
+		`RECOGNIZED` - GUEST, SOCIAL, REGISTERED - Can checkout
+		`AUTHENTICATED` - SOCIAL, REGISTERED - Can view order history
+		`REGISTERED` - REGISTERED - Can reset/change password
+	"""
+	# VisitingCustomer (no user/customer)
+	#   Customer
 	# True: is_anonymous, is_visitor,
-	# False: is_authenticated, is_registered, is_recognized, is_guest,
-	#
-	# User
+	# False: is_authenticated, is_registered, is_social, is_recognized, is_guest,
+	#   User
 	# True: is_anonymous,
 	# False: is_authenticated, is_registered, is_recognized, is_guest, is_visitor,
 
+	UNRECOGNIZED = 0, _("Unrecognized")
+
 	GUEST = 1, _("Guest")
 	# [IF GUEST IS ACTIVE]
-	# Customer
+	#   Customer
 	# True: is_recognized, is_guest, is_anonymous,
-	# False: is_authenticated, is_registered, is_visitor,
-	#
-	# User
+	# False: is_authenticated, is_registered, is_social, is_visitor,
+	#   User
 	# True: is_authenticated
 	# False: is_anonymous, is_registered, is_recognized, is_guest, is_visitor,
 	#
 	# [IF GUEST IS INACTIVE]
-	# Customer
+	#   Customer
 	# True: is_recognized, is_guest, is_anonymous,
 	# False: is_authenticated, is_registered, is_visitor,
-	#
-	# User
+	#   User
 	# True: is_anonymous,
 	# False: is_authenticated, is_registered, is_recognized, is_guest, is_visitor,
 
-	REGISTERED = 2, _("Registered")
-	# Customer
+	SOCIAL = 2, _("Social")
+	#   Customer
+	# True: is_authenticated, is_social, is_recognized,
+	# False: is_registered, is_guest, is_anonymous, is_visitor,
+	#   User
+	# True: is_authenticated,
+	# False: is_registered, is_recognized, is_guest, is_anonymous, is_visitor,
+
+	REGISTERED = 3, _("Registered")
+	#   Customer
 	# True: is_authenticated, is_registered, is_recognized,
 	# False: is_guest, is_anonymous, is_visitor,
-	#
-	# User
+	#   User
 	# True: is_authenticated,
 	# False: is_registered, is_recognized, is_guest, is_anonymous, is_visitor,
 
@@ -206,7 +249,7 @@ class CustomerManager(models.Manager):
 		creates it if none exists) and sets state too REGISTERED.
 
 		`Anonymous` users get (or creates) a session based `Customer` object
-		where the username is their encoded session_key. If create, their state
+		where the username is their encoded session_key. If created, their state
 		is UNRECOGNIZED and is_active = False.
 		"""
 		if request.user.is_authenticated:

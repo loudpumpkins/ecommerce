@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 # external
 from django.conf import settings
 from django.db import models
@@ -13,9 +15,7 @@ class Notification(models.Model):
 
 	example usage:
 
-	notifications = Notification.objects.filter(
-		transition_target=order.status, store=order.store
-	)
+	notifications = Notification.objects.filter(transition_target=order.status)
 	for notification in notifications:
 		* send email with context *
 	"""
@@ -27,12 +27,6 @@ class Notification(models.Model):
 
 	class MailTemplate(models.TextChoices):
 		WELCOME = "welcome", _("Welcome")
-
-	store = models.ForeignKey(
-		'shop.Store',
-		on_delete=models.CASCADE,
-		verbose_name=_("Store"),
-	)
 
 	name = models.CharField(
 		max_length=50,
@@ -68,18 +62,48 @@ class Notification(models.Model):
 		app_label = 'shop'
 		verbose_name = _("Notification")
 		verbose_name_plural = _("Notifications")
-		ordering = ['store', 'transition_target', 'recipient_id']
+		ordering = ['transition_target', 'recipient_id']
 
 	def __str__(self):
 		return self.name
 
-	def get_recipient(self, order):
-		if self.notify is self.Notify.RECIPIENT:
-			return self.recipient.email
-		if self.notify is self.Notify.CUSTOMER:
-			return order.customer.email
-		if self.notify is self.Notify.VENDOR:
-			return order.store.vendor_email
+	@classmethod
+	def extra_events(cls):
+		"""
+		Add additional non-order related event notifications to the `Notification`
+		admin side.
+		"""
+		extra_events = OrderedDict()
+		extra_events['user_registered'] = "User registered"
+		extra_events['password_reset'] = "Password reset request"
+		return extra_events
+
+	def get_recipient(self, reference):
+		"""
+		Fetch the recipient email for a given notification where `reference` can
+		be an instance of `Order` or `Customer`
+		"""
+		from shop.models.order import Order
+		from customer.models import Customer
+		if isinstance(reference, Order):
+			order = reference
+			if self.notify is self.Notify.RECIPIENT:
+				return self.recipient.email
+			if self.notify is self.Notify.CUSTOMER:
+				return order.customer.email
+			if self.notify is self.Notify.VENDOR:
+				return order.store.vendor_email
+		elif isinstance(reference, Customer):
+			customer = reference
+			if self.notify is self.Notify.RECIPIENT:
+				return self.recipient.email
+			if self.notify is self.Notify.CUSTOMER:
+				return customer.email
+			if self.notify is self.Notify.VENDOR:
+				return customer.store.vendor_email
+		else:
+			raise TypeError('`reference` must be an instance of `Order` or '
+			                '`Customer`.')
 
 
 def get_file_filename(instance, filename):

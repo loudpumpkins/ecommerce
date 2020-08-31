@@ -4,6 +4,7 @@ import warnings
 import logging
 
 # external
+from allauth.account.signals import user_signed_up
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.core.exceptions import ObjectDoesNotExist
@@ -41,11 +42,11 @@ class Customer(models.Model):
 
 	store = models.ForeignKey(
 		'shop.Store',
-		on_delete=models.SET_DEFAULT,
+		on_delete=models.DO_NOTHING,
 		related_name='customers',
-		default=None,
-		null=True,
-		blank=True,
+		# default=None,
+		# null=True,
+		# blank=True,
 	)
 
 	number = models.PositiveIntegerField(
@@ -125,11 +126,12 @@ class Customer(models.Model):
 
 	@property
 	def is_anonymous(self):
+		# visitors are also anonymous
 		return self.recognized in (CustomerState.UNRECOGNIZED, CustomerState.GUEST)
 
 	@property
 	def is_authenticated(self):
-		return self.recognized is CustomerState.REGISTERED
+		return self.recognized in (CustomerState.SOCIAL, CustomerState.REGISTERED)
 
 	@property
 	def is_recognized(self):
@@ -154,6 +156,27 @@ class Customer(models.Model):
 		"""
 		if self.recognized != CustomerState.GUEST:
 			self.recognized = CustomerState.GUEST
+			if commit:
+				self.save(update_fields=['recognized'])
+			# TODO send and receive signal -- suggestion below
+			# customer_recognized = Signal(providing_args=['customer', 'request'])
+			# customer_recognized.send(sender=self.__class__, customer=self, request=request)
+
+	@property
+	def is_social(self):
+		"""
+		Return true if the customer logged in through a social platform. They
+		can re-login, view orders, but cannot change passwords. They must always
+		login through the same platform they originally logged in through.
+		"""
+		return self.recognized is CustomerState.SOCIAL
+
+	def recognize_as_social(self, request=None, commit=True):
+		"""
+		Recognize the current customer as a socially logged in customer.
+		"""
+		if self.recognized != CustomerState.SOCIAL:
+			self.recognized = CustomerState.SOCIAL
 			if commit:
 				self.save(update_fields=['recognized'])
 			# TODO send and receive signal -- suggestion below
@@ -326,11 +349,13 @@ def handle_customer_login(sender, **kwargs):
 	When the user is logged in, subsequent calls to request.customer will refer
 	to previous Customer (likely visitor customer). So we update request.customer
 	to an authenticated Customer upon login.
+
+	NOTE: inactive users such as Guest users are NOT logged in.
 	"""
 	try:
 		kwargs['request'].customer = kwargs['user'].customer
-		logger.debug("New user [%s] logged in. Set new `Customer` to `request`."
-		            % kwargs['user'])
+		logger.debug("A user [%s] logged in. Assigned the current user's "
+		             "`Customer` to the request. (request.Customer)" % kwargs['user'])
 	except (AttributeError, ObjectDoesNotExist) as e:
 		kwargs['request'].customer = SimpleLazyObject(
 			lambda: Customer.objects.get_from_request(kwargs['request']))
@@ -348,3 +373,15 @@ def handle_customer_logout(sender, **kwargs):
 	kwargs['request'].customer = SimpleLazyObject(
 		lambda: Customer.objects.get_from_request(kwargs['request']))
 	logger.debug("User logged out. Set `Customer` to `get_from_request(request)`.")
+
+
+@receiver(user_signed_up)
+def handle_customer_signup(sender, **kwargs):
+	"""
+	Send welcome message - registration notification
+	:param sender: User
+	:param kwargs: request, user, [sociallogin (if social account only)]
+	"""
+	from shared.notifications import user_registration_notification
+	customer = kwargs.get('user').customer
+	user_registration_notification(customer)

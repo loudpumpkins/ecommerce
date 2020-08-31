@@ -335,7 +335,7 @@ class Order(models.Model, metaclass=WorkflowMixinMetaclass):
 		of this Order object are executed.
 		"""
 		# inner import to avoid circular import
-		from shared.transition import transition_change_notification
+		from shared.notifications import transition_change_notification
 
 		auto_transition = self._auto_transitions.get(self.status)
 		if callable(auto_transition):

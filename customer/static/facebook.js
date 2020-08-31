@@ -4,12 +4,14 @@
 
   /* SUPPORT FUNCTIONS */
   function error_response(data, prefix){
-    document.getElementById('api-response').innerHTML = "Response: " + data.status + ' ' + data.statusText + ', Action: ' + prefix + '<br/>Content: ' + data.responseText
+    var message = document.createElement('div').innerHTML = "Response: "+prefix+"<br/>Content: " + data
+    document.getElementById('api-response').after(message)
     // $('.api-response').html("Response: " + data.status + ' ' + data.statusText + ', Action: ' + prefix + '<br/>Content: ' + data.responseText);
   }
 
   function success_response(data){
-    document.getElementById('api-response').innerHTML = "Response: OK<br/>Content: " + JSON.stringify(data)
+    var message = document.createElement('p').innerHTML = "Response: OK<br/>Content: " + data
+    document.getElementById('api-response').after(message)
     // $('.api-response').html("Response: OK<br/>Content: " + JSON.stringify(data));
   }
 
@@ -22,62 +24,31 @@
     }
 
     httpRequest.onreadystatechange = function(){
+      allauth.response = this
       if ( this.readyState == 4 && this.status == 200 ) {
         success_response(this.responseText);
       } else {
-        error_response(this.responseText, 'post response')
+        error_response(this.responseText, this.statusText)
       }
     };
 
     httpRequest.open('post', action);
     httpRequest.send(formData);
   }
-
-  // function postForm(action, data) {
-  //   var f = document.createElement('form')
-  //   f.method = 'POST'
-  //   f.action = action
-  //
-  //   for (var key in data) {
-  //     var d = document.createElement('input')
-  //     d.type = 'hidden'
-  //     d.name = key
-  //     d.value = data[key]
-  //     f.appendChild(d)
-  //   }
-  //   document.body.appendChild(f)
-  //   f.submit()
-  // }
-
-  function setLocationHref(url) {
-    if (typeof(url) === 'function') {
-      url()
-    } else {
-      window.location.href = url
-    }
-  }
   /* END OF SUPPORT */
 
   var allauth = window.allauth = window.allauth || {}
   var fbSettings = JSON.parse(document.getElementById('allauth-facebook-settings').innerHTML)
-  // {
+  // "initParams": {
   //   "appId": "762414111184191",
-  //   "version": "v8.0",
-  //   "initParams": {
-  //     "appId": "762414111184191",
-  //     "version": "v8.0"
-  //   },
-  //   "loginOptions": {
-  //     "scope": "email"
-  //    },
-  //    "nextUrl": "{{ request.get_full_path }}",
-  //    "loginByTokenUrl": "http://{{ store.domain }}/accounts/facebook/login/token/",
-  //    "cancelUrl": "http://{{ store.domain }}/accounts/social/login/cancelled/",
-  //    "logoutUrl": "http://{{ store.domain }}/accounts/logout/",
-  //    "loginUrl": "http://{{ store.domain }}/accounts/facebook/login/",
-  //    "errorUrl": "http://{{ store.domain }}/accounts/social/login/error/",
-  //    "csrfToken": "{% csrf_token %}"
-  // }
+  //   "version": "v8.0"
+  // },
+  // "loginOptions": {
+  //   "scope": "email,public_profile"
+  //  },
+  //  "loginByTokenUrl": "{% url 'customer:fb-login-api' %}",
+  //  "logoutUrl": "http://{{ store.domain }}/accounts/logout/",
+  //  "csrfToken": "{{ csrf_token }}"
 
   var fbInitialized = false
 
@@ -89,7 +60,6 @@
       window.fbAsyncInit = function () {
         // window.fbAsyncInit is called as soon as SDK loads
         // call FB.init()
-        console.log('ready')
         FB.init(opts.initParams)
         fbInitialized = true
         allauth.facebook.onInit()
@@ -98,15 +68,14 @@
     },
 
     onInit: function () {
+      // init method - empty for now
     },
 
     login: function () {
-      var nextUrl = this.opts.nextUrl
       var action = 'authenticate' //'authenticate' | 'reauthorize' | 'reauthenticate' | 'rerequest'
       var self = this
       if (!fbInitialized) {
-        // var url = this.opts.loginUrl + '?next=' + encodeURIComponent(nextUrl) + '&action=' + encodeURIComponent(action) + '&process=' + encodeURIComponent(process) + '&scope=' + encodeURIComponent(scope)
-        // setLocationHref(url)
+        console.log('Attempted to login before FB SDK was ready. Please wait.')
         return
       }
       if (action === 'reauthenticate' || action === 'rerequest' || action === 'reauthorize') {
@@ -115,7 +84,7 @@
 
       FB.login(function (response) {
         if (response.authResponse) {
-          self.onLoginSuccess(response, nextUrl)
+          self.onLoginSuccess(response)
         } else if (response && response.status && ['not_authorized', 'unknown'].indexOf(response.status) > -1) {
           self.onLoginCanceled(response)
         } else {
@@ -125,19 +94,16 @@
     },
 
     onLoginCanceled: function (response) {
-      // setLocationHref(this.opts.cancelUrl)
-      error_response(response, 'login canceled')
+      console.log('Login cancelled. response: '+ JSON.stringify(response))
     },
 
-    onLoginError: function (/* response */) {
-      // setLocationHref(this.opts.errorUrl)
-      error_response(response, 'login error')
+    onLoginError: function (response) {
+      console.log('Login error. response: '+ JSON.stringify(response))
     },
 
-    onLoginSuccess: function (response, nextUrl) {
+    onLoginSuccess: function (response) {
+      console.log('Login success. response: '+ JSON.stringify(response))
       var data = {
-        next: nextUrl || '',
-        // process: 'login',
         access_token: response.authResponse.accessToken,
         expires_in: response.authResponse.expiresIn,
         csrfmiddlewaretoken: this.opts.csrfToken
@@ -146,19 +112,19 @@
       postForm(this.opts.loginByTokenUrl, data)
     },
 
-    logout: function (nextUrl) {
+    logout: function () {
       var self = this
       if (!fbInitialized) {
         return
       }
       FB.logout(function (response) {
-        self.onLogoutSuccess(response, nextUrl)
+        self.onLogoutSuccess(response)
       })
     },
 
-    onLogoutSuccess: function (response, nextUrl) {
+    onLogoutSuccess: function (response) {
+      console.log('Logout success. response: '+ JSON.stringify(response))
       var data = {
-        next: nextUrl || '',
         csrfmiddlewaretoken: this.opts.csrfToken
       }
 
