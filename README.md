@@ -1,5 +1,8 @@
 # e-commerce API
-admin credentials :: *admin:secret*
+Backend Django API that can handle requests from multiple e-commerce stores with different domains.  
+The idea is to have multiple React Apps (or any other front-end framework) hosted on Google's Cloud Platform access a single hosted API.  
+Google buckets will serve the React App to the user using it's robust CDN. The end-user will only hit our weak server (compared to Google's servers) when making API calls.  
+This should help pages load faster and improve user experience.  
 
 ## Steps to launch a new site
 
