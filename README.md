@@ -1,5 +1,5 @@
 # [not a minimum viable product yet]  
-## Project in its infancy
+Project in its infancy
 
 # e-commerce API
 Backend Django API that can handle requests from multiple e-commerce stores with different domains.  
